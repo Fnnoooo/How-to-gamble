@@ -700,7 +700,7 @@
             updateTurnIndicators(); updateUI(); startMatchTimer();
         }
 
-        // --- PeerJS Multiplayer Implementation with Reliable JOIN_READY Handshake ---
+        // --- PeerJS Multiplayer Implementation (Fixed Handshake) ---
         els.createMpBtn.addEventListener('click', () => {
             const shortCode = 'ROU-' + Math.floor(1000 + Math.random() * 9000);
             peer = new Peer(shortCode);
@@ -716,10 +716,6 @@
                 conn = incomingConn;
                 setupConnection();
                 isHost = true;
-                
-                conn.on('open', () => {
-                    // Wait for guest JOIN_READY signal before starting match to prevent connection freeze
-                });
             });
 
             peer.on('error', (err) => {
