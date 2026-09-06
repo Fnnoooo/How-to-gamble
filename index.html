@@ -700,7 +700,7 @@
             updateTurnIndicators(); updateUI(); startMatchTimer();
         }
 
-        // --- PeerJS Multiplayer Implementation ---
+        // --- PeerJS Multiplayer Implementation with Reliable JOIN_READY Handshake ---
         els.createMpBtn.addEventListener('click', () => {
             const shortCode = 'ROU-' + Math.floor(1000 + Math.random() * 9000);
             peer = new Peer(shortCode);
@@ -716,9 +716,9 @@
                 conn = incomingConn;
                 setupConnection();
                 isHost = true;
+                
                 conn.on('open', () => {
-                    conn.send({ type: 'START', rounds: TOTAL_ROUNDS });
-                    startMPGame(TOTAL_ROUNDS);
+                    // Wait for guest JOIN_READY signal before starting match to prevent connection freeze
                 });
             });
 
@@ -739,11 +739,8 @@
                 isHost = false;
 
                 conn.on('open', () => {
-                    // Connected successfully!
-                });
-
-                conn.on('error', () => {
-                    alert("Room not found or connection failed.");
+                    // Send ready signal to host once connection opens
+                    conn.send({ type: 'JOIN_READY' });
                 });
             });
             peer.on('error', (err) => {
@@ -765,7 +762,7 @@
 
             els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> Friend`;
             els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
-            els.mpCodeDisp.textContent = peer.id;
+            els.mpCodeDisp.textContent = isHost ? peer.id : conn.peer;
             els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
             els.mpDisplay.classList.remove('hidden');
 
@@ -775,7 +772,11 @@
 
         function setupConnection() {
             conn.on('data', (data) => {
-                if(data.type === 'START') {
+                if(data.type === 'JOIN_READY' && isHost) {
+                    conn.send({ type: 'START', rounds: TOTAL_ROUNDS });
+                    startMPGame(TOTAL_ROUNDS);
+                }
+                if(data.type === 'START' && !isHost) {
                     startMPGame(data.rounds);
                 }
                 if(data.type === 'SPIN') {
