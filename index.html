@@ -37,10 +37,7 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* --- New Lightning Strike Effect --- */
-        .lightning-strike-anim {
-            animation: strike-sequence 1s ease-in-out infinite;
-        }
+        .lightning-strike-anim { animation: strike-sequence 1s ease-in-out infinite; }
         @keyframes strike-sequence {
             0% { opacity: 0; }
             10% { opacity: 1; transform: translateX(-50%) scaleX(1.2); filter: brightness(1.5); }
@@ -58,19 +55,14 @@
             100% { box-shadow: 0 0 100px #1d4ed8, 0 0 50px #ffffff, inset 0 0 40px #93c5fd; border-color: #ffffff; filter: brightness(1.8) contrast(1.5); }
         }
 
-        /* --- New Black Hole Suck Effect --- */
-        .blackhole-suck-board {
-            animation: spiral-in 3s cubic-bezier(0.5, 0, 0.2, 1) forwards;
-        }
+        .blackhole-suck-board { animation: spiral-in 3s cubic-bezier(0.5, 0, 0.2, 1) forwards; }
         @keyframes spiral-in {
             0% { transform: scale(1) rotate(0deg); filter: blur(0px); opacity: 1; }
             50% { filter: blur(2px) brightness(0.5) contrast(1.5); opacity: 0.8; }
             100% { transform: scale(0) rotate(1080deg); filter: blur(10px) brightness(0); opacity: 0; }
         }
 
-        .animate-bh-pulse {
-            animation: bh-grow 3s ease-in forwards;
-        }
+        .animate-bh-pulse { animation: bh-grow 3s ease-in forwards; }
         @keyframes bh-grow {
             0% { transform: scale(0); opacity: 0; }
             20% { transform: scale(1.2) rotate(180deg); opacity: 1; }
@@ -78,7 +70,6 @@
             100% { transform: scale(0) rotate(1080deg); opacity: 0; }
         }
 
-        /* Standard Game Elements */
         .chip {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), inset 0 0 0 3px rgba(255, 255, 255, 0.25);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -174,12 +165,10 @@
         <!-- Roulette Wheel Section -->
         <div class="w-full lg:w-1/2 flex flex-col items-center justify-center relative">
             
-            <!-- Lightning Overlay Element -->
             <svg id="lightning-svg" class="hidden absolute z-[100] pointer-events-none" style="top: -30vh; left: 50%; transform: translateX(-50%); width: 180px; height: 75vh;" viewBox="0 0 100 500">
                 <path d="M60 0 L10 250 L45 250 L20 500 L90 200 L50 200 Z" fill="#ffffff" filter="drop-shadow(0 0 15px #3b82f6) drop-shadow(0 0 30px #60a5fa)"></path>
             </svg>
 
-            <!-- Black Hole Overlay Element -->
             <div id="blackhole-overlay" class="hidden absolute z-[60] pointer-events-none w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
                 <div class="w-full h-full rounded-full animate-bh-pulse" style="background: radial-gradient(circle, #000000 30%, #4c1d95 60%, transparent 80%); box-shadow: 0 0 100px #7e22ce, inset 0 0 50px #000;"></div>
             </div>
@@ -252,10 +241,10 @@
     </main>
 
     <!-- Match Setup Modal -->
-    <div id="opponent-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
+    <div id="opponent-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
         <div class="glass-panel gold-border p-6 rounded-3xl max-w-lg w-full text-center flex flex-col gap-4">
             <div>
-                <h2 class="font-serif-title text-2xl sm:text-3xl font-black gold-gradient-text mb-1">NEW MATCH</h2>
+                <h2 class="font-serif-title text-2xl sm:text-3xl font-black gold-gradient-text mb-1">CHOOSE YOUR OPPONENT</h2>
                 <p class="text-slate-400 text-xs sm:text-sm">Your Bankroll: <span id="modal-bankroll" class="text-emerald-400 font-bold">$100</span></p>
             </div>
 
@@ -422,7 +411,7 @@
     <!-- Main Logic & Firebase MP Module -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Sound Engine
@@ -480,7 +469,7 @@
         const sound = new SoundController();
         let soundEnabled = true;
 
-        // Firebase Setup & MP State
+        // Firebase Standalone Config Setup for GitHub Pages
         let db, auth, currentUser;
         let isMultiplayer = false;
         let isHost = false;
@@ -489,27 +478,32 @@
         let lastProcessedSpinId = null;
 
         const initFirebase = async () => {
-            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
+            try {
+                // Safe standalone Firebase fallback for static hosting like GitHub Pages
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+                    apiKey: "AIzaSyDummyKeyForGitHubPagesHostingOnly12345",
+                    authDomain: "roulette-battles-mp.firebaseapp.com",
+                    projectId: "roulette-battles-mp"
+                };
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
 
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
                 await signInAnonymously(auth);
+                onAuthStateChanged(auth, u => { currentUser = u; });
+            } catch (err) {
+                console.log("Offline / Standalone mode active", err);
             }
-            onAuthStateChanged(auth, u => { currentUser = u; });
         };
         initFirebase();
 
-        const getAppId = () => typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const getAppId = () => typeof __app_id !== 'undefined' ? __app_id : 'github-pages-roulette-app';
         const getRoomRef = (id) => doc(db, 'artifacts', getAppId(), 'public', 'data', 'rooms', id);
 
         // Core Game State
         let globalBankroll = 100; 
         let playerBalance = 100;
-        let npcBalance = 100; // Used for both AI and MP opponent
+        let npcBalance = 100;
         let selectedColor = null;
         let betAmount = 10;
         let activeTurn = 'player';
@@ -521,11 +515,7 @@
         let timerInterval = null;
         let matchActive = false;
 
-        // Effects State
-        let effects = {
-            lightning: { owned: false },
-            blackhole: { owned: false }
-        };
+        let effects = { lightning: { owned: false }, blackhole: { owned: false } };
         let activeEffect = null; 
 
         const NPC_LIST = [
@@ -717,7 +707,6 @@
             els.blackholeDiv.classList.add('hidden');
             els.histContainer.innerHTML = '';
             
-            // Clean modal states safely
             els.goModal.classList.add('opacity-0', 'pointer-events-none');
             els.turnModal.classList.add('opacity-0', 'pointer-events-none');
         }
@@ -741,33 +730,34 @@
 
         // --- Multiplayer Functions ---
         els.createMpBtn.addEventListener('click', async () => {
-            if(!currentUser) { alert("Connecting to servers..."); return; }
+            if(!db) { alert("Connecting to multiplayer server... please try again in 2 seconds."); return; }
             const code = Math.random().toString(36).substring(2, 6).toUpperCase();
             
             try {
                 await setDoc(getRoomRef(code), {
-                    host: currentUser.uid, guest: null,
+                    host: currentUser ? currentUser.uid : 'host_user', guest: null,
                     hostBalance: 100, guestBalance: 100,
                     totalRounds: TOTAL_ROUNDS, currentRound: 1,
-                    status: 'waiting', activeTurn: currentUser.uid, spinData: null
+                    status: 'waiting', activeTurn: currentUser ? currentUser.uid : 'host_user', spinData: null
                 });
                 mpRoomId = code; isHost = true;
                 els.oppModal.classList.add('hidden');
                 els.waitCode.textContent = code;
                 els.mpWaitModal.classList.remove('hidden');
                 listenToRoom(code);
-            } catch (e) { alert("Failed to create room."); console.error(e); }
+            } catch (e) { alert("Failed to create room. Check connection."); console.error(e); }
         });
 
         els.joinMpBtn.addEventListener('click', async () => {
-            if(!currentUser) return;
+            if(!db) { alert("Connecting to multiplayer server..."); return; }
             const code = els.joinMpInput.value.trim().toUpperCase();
             if(!code) return;
             
             try {
-                const docSnap = await getDoc(getRoomRef(code));
+                const docRef = getRoomRef(code);
+                const docSnap = await getDoc(docRef);
                 if(docSnap.exists() && !docSnap.data().guest) {
-                    await updateDoc(getRoomRef(code), { guest: currentUser.uid, status: 'playing' });
+                    await updateDoc(docRef, { guest: currentUser ? currentUser.uid : 'guest_user', status: 'playing' });
                     mpRoomId = code; isHost = false;
                     els.oppModal.classList.add('hidden');
                     listenToRoom(code);
@@ -778,7 +768,7 @@
         els.cancelMpBtn.addEventListener('click', async () => {
             if(mpUnsubscribe) mpUnsubscribe();
             
-            if(isHost && mpRoomId) {
+            if(isHost && mpRoomId && db) {
                 try { await deleteDoc(getRoomRef(mpRoomId)); } catch(e) { console.log(e); }
             }
             
@@ -791,12 +781,10 @@
             mpUnsubscribe = onSnapshot(getRoomRef(code), (docSnap) => {
                 const data = docSnap.data();
                 if(!data) {
-                    // Room was deleted
                     if(matchActive && !isHost) endMatch("Host disconnected.");
                     return;
                 }
 
-                // Game starts
                 if(data.status === 'playing' && !matchActive) {
                     els.mpWaitModal.classList.add('hidden');
                     isMultiplayer = true; matchActive = true;
@@ -814,18 +802,18 @@
                 }
 
                 if(matchActive) {
+                    const myUid = currentUser ? currentUser.uid : (isHost ? 'host_user' : 'guest_user');
                     playerBalance = isHost ? data.hostBalance : data.guestBalance;
                     npcBalance = isHost ? data.guestBalance : data.hostBalance;
                     currentRound = data.currentRound;
-                    activeTurn = data.activeTurn === currentUser.uid ? 'player' : 'npc';
+                    activeTurn = data.activeTurn === myUid ? 'player' : 'npc';
                     
                     updateUI(); updateTurnIndicators();
 
-                    // Detect Spin Trigger
                     if(data.status === 'spinning' && data.spinData) {
                         if(data.spinData.spinId !== lastProcessedSpinId) {
                             lastProcessedSpinId = data.spinData.spinId;
-                            const who = data.activeTurn === currentUser.uid ? 'player' : 'npc';
+                            const who = data.activeTurn === myUid ? 'player' : 'npc';
                             startSpinSequence(who, data.spinData.color, data.spinData.amount, data.spinData.pocketIndex);
                         }
                     }
@@ -872,14 +860,11 @@
             }
         }
 
-        // --- SP NPC AI (Fixed Bets) ---
         function generateNPCBet() {
             if (npcBalance <= 0) return { color: null, amount: 0 };
-
             const color = Math.random() < currentNPC.greenProbability ? 'green' : (Math.random() > 0.5 ? 'red' : 'black');
-            
             const validChips = [10, 25, 50, 100, npcBalance].filter(c => c <= npcBalance);
-            if(validChips.length === 0) validChips.push(npcBalance); // fallback
+            if(validChips.length === 0) validChips.push(npcBalance);
 
             let amount = 10;
             if (currentNPC.risk === 'low') amount = validChips[0];
@@ -889,7 +874,6 @@
             return { color, amount };
         }
 
-        // --- Player Actions ---
         els.colorBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 if (isSpinning || !matchActive || activeTurn !== 'player') return;
@@ -930,7 +914,6 @@
             updateBetDisplay(); validateBet();
         }
 
-        // --- Spin Triggers ---
         els.spinBtn.addEventListener('click', () => {
             if (isSpinning || activeTurn !== 'player' || !selectedColor || betAmount > playerBalance) return;
             
@@ -941,21 +924,19 @@
                     spinData: { color: selectedColor, amount: betAmount, pocketIndex: pIndex, spinId: Date.now() }
                 });
                 els.spinBtn.disabled = true;
-                // Animation starts via onSnapshot listener
             } else {
                 startSpinSequence('player', selectedColor, betAmount);
             }
         });
 
         function triggerNPCTurn() {
-            if(isMultiplayer) return; // DB listeners handle MP turn changes
+            if(isMultiplayer) return; 
             npcBet = generateNPCBet();
             if (npcBet.amount <= 0) { endMatch("NPC Bankrupt!"); return; }
             els.nBetTag.textContent = `$${npcBet.amount} on ${npcBet.color.toUpperCase()}`;
             setTimeout(() => { startSpinSequence('npc', npcBet.color, npcBet.amount); }, 1200);
         }
 
-        // --- Core Animation Engine ---
         function startSpinSequence(who, color, amount, forcedPocketIndex = null) {
             sound.init(); isSpinning = true; els.spinBtn.disabled = true;
             els.spinTurnTxt.textContent = who === 'player' ? "Your Spin:" : (isMultiplayer ? "Opponent Spin:" : `${currentNPC.name}'s Spin:`);
@@ -1007,7 +988,6 @@
             requestAnimationFrame(animateSpin);
         }
 
-        // --- Turn Resolution ---
         function resolveTurn(who, color, amount, pocket) {
             const isWin = (color === pocket.color);
             const multiplier = (color === 'green') ? 25 : 2;
@@ -1181,10 +1161,9 @@
             confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         }
 
-        // Return to Menu / Match Restart Logic
         els.restartBtn.addEventListener('click', async () => {
             if(mpUnsubscribe) mpUnsubscribe();
-            if(isMultiplayer && isHost && mpRoomId) {
+            if(isMultiplayer && isHost && mpRoomId && db) {
                 try { await deleteDoc(getRoomRef(mpRoomId)); } catch(e) {}
             }
             
