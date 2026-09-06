@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Roulette Arena: Multiplayer & Effects</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Outfit:wght@300;400;600;700;900&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at center, #111827 0%, #030712 100%);
+            color: #f3f4f6;
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .font-serif-title { font-family: 'Cinzel', serif; }
+
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(234, 179, 8, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+        }
+
+        .gold-border { border: 1px solid rgba(234, 179, 8, 0.4); }
+
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #FFF5C0 0%, #F1C40F 50%, #B7950B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- New Lightning Strike Effect --- */
+        .lightning-strike-anim {
+            animation: strike-sequence 1s ease-in-out infinite;
+        }
+        @keyframes strike-sequence {
+            0% { opacity: 0; }
+            10% { opacity: 1; transform: translateX(-50%) scaleX(1.2); filter: brightness(1.5); }
+            20% { opacity: 0; }
+            30% { opacity: 1; transform: translateX(-50%) scaleX(1.5); filter: brightness(2); }
+            40% { opacity: 0; }
+            80% { opacity: 0; }
+            90% { opacity: 1; transform: translateX(-50%) scaleX(1.1); filter: brightness(1.2); }
+            100% { opacity: 0; }
+        }
+
+        .lightning-knockout { animation: wheel-flash 0.3s ease-in-out infinite alternate; }
+        @keyframes wheel-flash {
+            0% { box-shadow: 0 0 20px #3b82f6, inset 0 0 15px #60a5fa; border-color: #93c5fd; filter: brightness(1); }
+            100% { box-shadow: 0 0 100px #1d4ed8, 0 0 50px #ffffff, inset 0 0 40px #93c5fd; border-color: #ffffff; filter: brightness(1.8) contrast(1.5); }
+        }
+
+        /* --- New Black Hole Suck Effect --- */
+        .blackhole-suck-board {
+            animation: spiral-in 3s cubic-bezier(0.5, 0, 0.2, 1) forwards;
+        }
+        @keyframes spiral-in {
+            0% { transform: scale(1) rotate(0deg); filter: blur(0px); opacity: 1; }
+            50% { filter: blur(2px) brightness(0.5) contrast(1.5); opacity: 0.8; }
+            100% { transform: scale(0) rotate(1080deg); filter: blur(10px) brightness(0); opacity: 0; }
+        }
+
+        .animate-bh-pulse {
+            animation: bh-grow 3s ease-in forwards;
+        }
+        @keyframes bh-grow {
+            0% { transform: scale(0); opacity: 0; }
+            20% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+            80% { transform: scale(1.5) rotate(720deg); opacity: 1; }
+            100% { transform: scale(0) rotate(1080deg); opacity: 0; }
+        }
+
+        /* Standard Game Elements */
+        .chip {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), inset 0 0 0 3px rgba(255, 255, 255, 0.25);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .chip:hover { transform: translateY(-3px) scale(1.05); }
+        .chip:active { transform: translateY(0) scale(0.95); }
+        .chip-selected {
+            ring: 4px solid #f59e0b; transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.4);
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(34, 197, 94, 0.8); }
+        }
+        .glow-green { animation: pulse-green 2s infinite; }
+
+        .active-turn-ring { box-shadow: 0 0 20px rgba(234, 179, 8, 0.5); border-color: rgba(234, 179, 8, 0.8) !important; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(234, 179, 8, 0.3); border-radius: 4px; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between items-center p-2 sm:p-4 overflow-x-hidden">
+
+    <!-- Header / Stats Bar -->
+    <header class="w-full max-w-5xl glass-panel rounded-2xl p-3 sm:p-4 mb-2 sm:mb-4 flex flex-wrap justify-between items-center gap-2 gold-border">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-600 to-amber-300 flex items-center justify-center text-slate-950 font-black shadow-lg">
+                <i class="fa-solid fa-crown text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-serif-title text-lg sm:text-2xl font-black gold-gradient-text tracking-wider">ROULETTE BATTLES</h1>
+                <p class="text-xs text-slate-400">Global Bankroll: <span id="global-bankroll" class="text-emerald-400 font-bold">$100</span></p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="open-shop-btn" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 rounded-xl text-white font-bold text-xs sm:text-sm border border-blue-400/40 shadow-md transition flex items-center gap-2">
+                <i class="fa-solid fa-store"></i> SHOP
+            </button>
+            <button id="sound-toggle" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-yellow-500 border border-slate-700 transition" title="Toggle Sound">
+                <i id="sound-icon" class="fa-solid fa-volume-high text-base"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Timer & Round Bar (Visible in Game) -->
+    <div id="game-stats-bar" class="w-full max-w-5xl mb-3 hidden grid grid-cols-3 gap-3">
+        <div class="glass-panel px-4 py-2 rounded-xl flex items-center justify-between border border-yellow-500/20">
+            <span class="text-xs text-yellow-500 uppercase font-bold">Match Time</span>
+            <span id="match-timer" class="text-lg font-black text-amber-400 font-mono">03:00</span>
+        </div>
+        <div class="glass-panel px-4 py-2 rounded-xl flex items-center justify-between border border-yellow-500/20 col-span-2 sm:col-span-1">
+            <span class="text-xs text-yellow-500 uppercase font-bold">Round</span>
+            <span id="round-display" class="text-lg font-black text-slate-100">1 / 10</span>
+        </div>
+        <div id="mp-room-display" class="hidden glass-panel px-4 py-2 rounded-xl flex items-center justify-between border border-blue-500/30 col-span-3 sm:col-span-1 bg-blue-900/20">
+            <span class="text-xs text-blue-400 uppercase font-bold">Room Code</span>
+            <span id="mp-room-code" class="text-lg font-black text-white tracking-widest">----</span>
+        </div>
+    </div>
+
+    <!-- VS Battle Arena Bar -->
+    <section id="vs-arena-bar" class="w-full max-w-5xl mb-4 hidden grid grid-cols-2 gap-3 sm:gap-6">
+        <div id="player-card" class="glass-panel p-3 sm:p-4 rounded-2xl border-l-4 border-l-blue-500 flex flex-col justify-between transition-all duration-300">
+            <div class="flex justify-between items-center mb-1">
+                <span id="player-name-tag" class="text-xs uppercase font-extrabold text-blue-400 flex items-center gap-1.5"><i class="fa-solid fa-user"></i> You</span>
+                <span id="player-status" class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-600/40 px-2 py-0.5 rounded font-extrabold uppercase animate-pulse">YOUR TURN</span>
+            </div>
+            <div class="flex justify-between items-end">
+                <span id="player-balance" class="text-xl sm:text-3xl font-black text-emerald-400 transition-all">$100</span>
+                <span id="player-bet-tag" class="text-xs bg-slate-900 border border-slate-700 px-2 py-1 rounded text-slate-300 font-bold">No Bet</span>
+            </div>
+        </div>
+
+        <div id="npc-card" class="glass-panel p-3 sm:p-4 rounded-2xl border-r-4 border-r-red-500 flex flex-col justify-between text-right transition-all duration-300">
+            <div class="flex justify-between items-center mb-1 flex-row-reverse">
+                <span id="npc-name" class="text-xs uppercase font-extrabold text-red-400 flex items-center gap-1.5">Rookie Rick <i class="fa-solid fa-robot"></i></span>
+                <span id="npc-status" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">Waiting</span>
+            </div>
+            <div class="flex justify-between items-end flex-row-reverse">
+                <span id="npc-balance" class="text-xl sm:text-3xl font-black text-emerald-400 transition-all">$100</span>
+                <span id="npc-bet-tag" class="text-xs bg-slate-900 border border-slate-700 px-2 py-1 rounded text-slate-300 font-bold">No Bet</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Game Container -->
+    <main class="w-full max-w-5xl flex flex-col lg:flex-row items-center gap-6 my-auto">
+        
+        <!-- Roulette Wheel Section -->
+        <div class="w-full lg:w-1/2 flex flex-col items-center justify-center relative">
+            
+            <!-- Lightning Overlay Element -->
+            <svg id="lightning-svg" class="hidden absolute z-[100] pointer-events-none" style="top: -30vh; left: 50%; transform: translateX(-50%); width: 180px; height: 75vh;" viewBox="0 0 100 500">
+                <path d="M60 0 L10 250 L45 250 L20 500 L90 200 L50 200 Z" fill="#ffffff" filter="drop-shadow(0 0 15px #3b82f6) drop-shadow(0 0 30px #60a5fa)"></path>
+            </svg>
+
+            <!-- Black Hole Overlay Element -->
+            <div id="blackhole-overlay" class="hidden absolute z-[60] pointer-events-none w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
+                <div class="w-full h-full rounded-full animate-bh-pulse" style="background: radial-gradient(circle, #000000 30%, #4c1d95 60%, transparent 80%); box-shadow: 0 0 100px #7e22ce, inset 0 0 50px #000;"></div>
+            </div>
+
+            <div id="wheel-wrapper" class="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center rounded-full transition-all duration-300">
+                <div class="absolute inset-0 rounded-full border-8 border-yellow-600/80 shadow-[0_0_50px_rgba(0,0,0,0.8)] bg-gradient-to-tr from-amber-950 via-slate-900 to-amber-900 p-2"></div>
+                <canvas id="roulette-canvas" class="w-full h-full rounded-full z-10 shadow-inner"></canvas>
+                <div class="absolute z-20 w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-300 via-amber-600 to-yellow-800 rounded-full border-4 border-yellow-200 shadow-xl flex items-center justify-center pointer-events-none">
+                    <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-slate-950 border border-yellow-400/50 flex items-center justify-center">
+                        <i class="fa-solid fa-gem text-xs text-yellow-400"></i>
+                    </div>
+                </div>
+                <div class="absolute -top-3 z-30 flex flex-col items-center">
+                    <div class="text-yellow-400 text-xl sm:text-3xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"><i class="fa-solid fa-caret-down"></i></div>
+                </div>
+                <div id="spin-badge" class="hidden absolute top-6 z-30 bg-slate-900/95 text-yellow-400 px-4 py-1.5 rounded-full font-mono text-sm border border-yellow-500/40 shadow-lg animate-bounce">
+                    <i class="fa-solid fa-spinner fa-spin mr-2"></i><span id="spinner-turn-text">Your Turn:</span> <span id="countdown-timer">5.0</span>s
+                </div>
+            </div>
+
+            <div class="w-full max-w-xs mt-3 flex items-center justify-center gap-2">
+                <span class="text-xs text-slate-400 uppercase font-semibold mr-1">History:</span>
+                <div id="history-container" class="flex gap-1.5 overflow-x-auto py-1 px-2 max-w-[220px]"></div>
+            </div>
+        </div>
+
+        <!-- Betting Controls Section -->
+        <div id="betting-controls" class="w-full lg:w-1/2 flex flex-col gap-4 opacity-40 pointer-events-none transition-opacity duration-300">
+            <div class="glass-panel p-3.5 rounded-2xl flex flex-col gap-2.5">
+                <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">1. Choose Your Bet Color</span>
+                <div class="grid grid-cols-3 gap-2.5">
+                    <button data-color="red" class="color-btn relative group p-3 sm:p-4 rounded-xl border-2 border-red-500/30 bg-gradient-to-b from-red-900/40 to-red-950/80 hover:border-red-500 transition-all flex flex-col items-center justify-center gap-1">
+                        <span class="font-black text-base sm:text-lg text-red-400 tracking-wide">RED</span>
+                        <span class="bg-red-900/80 text-red-200 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full border border-red-500/40">+2X BONUS</span>
+                        <div class="bet-indicator hidden absolute top-2 right-2 w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></div>
+                    </button>
+                    <button data-color="green" class="color-btn glow-green relative group p-3 sm:p-4 rounded-xl border-2 border-emerald-500/40 bg-gradient-to-b from-emerald-900/40 to-emerald-950/80 hover:border-emerald-400 transition-all flex flex-col items-center justify-center gap-1">
+                        <span class="font-black text-base sm:text-lg text-emerald-400 tracking-wide">GREEN</span>
+                        <span class="bg-emerald-900/90 text-emerald-200 text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-full border border-emerald-400/50">+25X BONUS</span>
+                        <div class="bet-indicator hidden absolute top-2 right-2 w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></div>
+                    </button>
+                    <button data-color="black" class="color-btn relative group p-3 sm:p-4 rounded-xl border-2 border-slate-600/50 bg-gradient-to-b from-slate-900/80 to-slate-950 hover:border-slate-400 transition-all flex flex-col items-center justify-center gap-1">
+                        <span class="font-black text-base sm:text-lg text-slate-200 tracking-wide">BLACK</span>
+                        <span class="bg-slate-800 text-slate-300 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full border border-slate-600">+2X BONUS</span>
+                        <div class="bet-indicator hidden absolute top-2 right-2 w-3 h-3 rounded-full bg-slate-200 shadow-[0_0_8px_#e2e8f0]"></div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-panel p-3.5 rounded-2xl flex flex-col gap-2.5">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">2. Select Bet Wager</span>
+                    <span id="current-bet-display" class="text-xs sm:text-sm font-bold text-yellow-400">Selected Bet: $10</span>
+                </div>
+                <div class="grid grid-cols-5 gap-2">
+                    <button data-amount="10" class="chip-btn chip chip-selected rounded-full h-11 w-11 sm:h-13 sm:w-13 bg-gradient-to-b from-blue-500 to-blue-700 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center justify-self-center border-2 border-blue-300">$10</button>
+                    <button data-amount="25" class="chip-btn chip rounded-full h-11 w-11 sm:h-13 sm:w-13 bg-gradient-to-b from-green-500 to-green-700 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center justify-self-center border-2 border-green-300">$25</button>
+                    <button data-amount="50" class="chip-btn chip rounded-full h-11 w-11 sm:h-13 sm:w-13 bg-gradient-to-b from-purple-500 to-purple-700 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center justify-self-center border-2 border-purple-300">$50</button>
+                    <button data-amount="100" class="chip-btn chip rounded-full h-11 w-11 sm:h-13 sm:w-13 bg-gradient-to-b from-black to-slate-900 text-yellow-400 font-extrabold text-xs sm:text-sm flex items-center justify-center justify-self-center border-2 border-yellow-500">$100</button>
+                    <button data-amount="all" class="chip-btn chip rounded-full h-11 w-11 sm:h-13 sm:w-13 bg-gradient-to-b from-red-600 to-amber-700 text-white font-black text-[10px] uppercase flex items-center justify-center justify-self-center border-2 border-amber-300">MAX</button>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button id="spin-btn" disabled class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black text-lg sm:text-xl tracking-wider uppercase shadow-[0_0_20px_rgba(245,158,11,0.3)] disabled:opacity-40 disabled:cursor-not-allowed transition-all border border-yellow-200">
+                    CONFIRM BET & SPIN
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Match Setup Modal -->
+    <div id="opponent-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
+        <div class="glass-panel gold-border p-6 rounded-3xl max-w-lg w-full text-center flex flex-col gap-4">
+            <div>
+                <h2 class="font-serif-title text-2xl sm:text-3xl font-black gold-gradient-text mb-1">NEW MATCH</h2>
+                <p class="text-slate-400 text-xs sm:text-sm">Your Bankroll: <span id="modal-bankroll" class="text-emerald-400 font-bold">$100</span></p>
+            </div>
+
+            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
+                <span class="text-xs uppercase font-bold text-slate-400">Match Rounds:</span>
+                <div class="flex gap-1.5" id="round-selector">
+                    <button data-rounds="5" class="round-btn px-3 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition">5</button>
+                    <button data-rounds="10" class="round-btn px-3 py-1 rounded-xl bg-yellow-500 text-slate-950 text-xs font-black border border-yellow-400 transition">10</button>
+                    <button data-rounds="15" class="round-btn px-3 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition">15</button>
+                    <button data-rounds="20" class="round-btn px-3 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition">20</button>
+                </div>
+            </div>
+
+            <!-- Multiplayer Section -->
+            <div class="p-4 rounded-2xl border border-blue-500/30 bg-blue-950/30 flex flex-col gap-3">
+                <h3 class="text-sm font-bold text-blue-400 uppercase tracking-widest text-left">Multiplayer (Play with Friend)</h3>
+                <div class="flex gap-2">
+                    <button id="create-mp-btn" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs uppercase transition shadow-lg">
+                        Create MP Game
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="join-mp-code" placeholder="Enter Room Code" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-center font-mono uppercase focus:outline-none focus:border-blue-400">
+                    <button id="join-mp-btn" class="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl text-xs uppercase transition border border-slate-600">
+                        Join
+                    </button>
+                </div>
+            </div>
+
+            <!-- Single Player NPC List -->
+            <div class="grid grid-cols-1 gap-2 text-left max-h-[30vh] overflow-y-auto pr-1">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2 mb-1">Single Player (vs AI)</h3>
+                <button data-npc="0" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-full bg-blue-900/60 border border-blue-400 flex items-center justify-center text-lg text-blue-300">👦</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">Rookie Rick</h3><span class="text-[9px] bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded">EASY</span></div>
+                        <p class="text-[11px] text-slate-400">Low bets ($10-$50). Rarely bets Green.</p>
+                    </div>
+                </button>
+                <button data-npc="1" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-full bg-purple-900/60 border border-purple-400 flex items-center justify-center text-lg text-purple-300">👩‍💼</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">High-Roller Hannah</h3><span class="text-[9px] bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded">MEDIUM</span></div>
+                        <p class="text-[11px] text-slate-400">Aggressive gambler. Hunts Green 25x often.</p>
+                    </div>
+                </button>
+                <button data-npc="2" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-full bg-red-900/60 border border-red-400 flex items-center justify-center text-lg text-red-300">🤖</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">Gamble-Bot 3000</h3><span class="text-[9px] bg-red-900/50 text-red-300 px-2 py-0.5 rounded">HARD</span></div>
+                        <p class="text-[11px] text-slate-400">Calculates your score and goes all-in if behind.</p>
+                    </div>
+                </button>
+                <button data-npc="3" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-full bg-emerald-900/60 border border-emerald-400 flex items-center justify-center text-lg text-emerald-300">🍀</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">Lucky Luke</h3><span class="text-[9px] bg-emerald-900/50 text-emerald-300 px-2 py-0.5 rounded">EXPERT</span></div>
+                        <p class="text-[11px] text-slate-400">Has uncanny luck hitting green pockets.</p>
+                    </div>
+                </button>
+                <button data-npc="4" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-full bg-amber-900/60 border border-amber-400 flex items-center justify-center text-lg text-amber-300">👑</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">The Grandmaster</h3><span class="text-[9px] bg-amber-900/50 text-amber-300 px-2 py-0.5 rounded">MASTER</span></div>
+                        <p class="text-[11px] text-slate-400">The ultimate casino boss. Unforgiving strategy.</p>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MP Waiting Modal -->
+    <div id="mp-waiting-modal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-lg flex items-center justify-center z-[60] hidden">
+        <div class="text-center flex flex-col items-center gap-6">
+            <i class="fa-solid fa-spinner fa-spin text-5xl text-blue-500"></i>
+            <div>
+                <h2 class="font-serif-title text-2xl font-black text-white mb-2">WAITING FOR FRIEND</h2>
+                <p class="text-slate-400">Tell them to enter this Room Code to join:</p>
+            </div>
+            <div class="bg-slate-900 border-2 border-blue-500 px-8 py-4 rounded-2xl">
+                <span id="waiting-room-code" class="text-5xl font-black text-blue-400 tracking-widest font-mono">----</span>
+            </div>
+            <button id="cancel-mp-btn" class="text-slate-500 hover:text-white underline text-sm mt-4">Cancel Room</button>
+        </div>
+    </div>
+
+    <!-- Shop Modal -->
+    <div id="shop-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-[65] p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel gold-border p-6 rounded-3xl max-w-md w-full text-center flex flex-col gap-5">
+            <div class="flex justify-between items-center">
+                <h2 class="font-serif-title text-xl font-black gold-gradient-text">EFFECTS SHOP</h2>
+                <button id="close-shop-btn" class="text-slate-400 hover:text-white px-2 py-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-sm">
+                <span class="text-slate-400">Global Bankroll:</span>
+                <span id="shop-bankroll" class="font-bold text-emerald-400">$100</span>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 text-left">
+                <!-- Blue Lightning Effect -->
+                <div class="p-3.5 rounded-2xl border border-slate-700 bg-slate-900/90 flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-blue-600/30 border border-blue-400 flex items-center justify-center text-xl text-blue-400">⚡</div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-xs text-slate-100">Blue Lightning</h3>
+                        <p class="text-[10px] text-slate-400">Massive lightning strike explosion ($250).</p>
+                    </div>
+                    <button id="buy-lightning-btn" class="shop-btn px-3 py-2 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black rounded-xl text-[10px] uppercase transition min-w-[80px]">
+                        $250
+                    </button>
+                </div>
+
+                <!-- Black Hole Effect -->
+                <div class="p-3.5 rounded-2xl border border-slate-700 bg-slate-900/90 flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-purple-600/30 border border-purple-400 flex items-center justify-center text-xl text-purple-400">🌌</div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-xs text-slate-100">Black Hole</h3>
+                        <p class="text-[10px] text-slate-400">Singularity sucks in the board ($500).</p>
+                    </div>
+                    <button id="buy-blackhole-btn" class="shop-btn px-3 py-2 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black rounded-xl text-[10px] uppercase transition min-w-[80px]">
+                        $500
+                    </button>
+                </div>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-2">*Only one effect can be active at a time.</p>
+        </div>
+    </div>
+
+    <!-- Turn Spin Result Pop-up Modal -->
+    <div id="turn-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 opacity-0 pointer-events-none transition-all duration-300 p-4">
+        <div class="glass-panel gold-border p-6 rounded-3xl max-w-sm w-full text-center flex flex-col items-center gap-4 transform scale-90 transition-transform">
+            <div id="turn-icon-container" class="w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-xl"></div>
+            <div>
+                <h2 id="turn-title" class="font-serif-title text-xl font-black mb-1">YOU WON!</h2>
+                <p id="turn-desc" class="text-slate-300 text-xs sm:text-sm">The ball landed on Red.</p>
+            </div>
+            <div id="turn-amount" class="text-2xl font-black text-emerald-400">+$100</div>
+            
+            <button id="turn-modal-btn" class="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold rounded-xl transition uppercase text-xs tracking-wide">
+                NEXT TURN
+            </button>
+        </div>
+    </div>
+
+    <!-- Match Game Over Modal -->
+    <div id="gameover-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-[70] opacity-0 pointer-events-none transition-all duration-300 p-4">
+        <div class="glass-panel gold-border p-8 rounded-3xl max-w-sm w-full text-center flex flex-col items-center gap-4 transform scale-90 transition-transform">
+            <div id="gameover-icon-container" class="w-20 h-20 rounded-full flex items-center justify-center text-3xl shadow-xl"></div>
+            <div>
+                <h2 id="gameover-title" class="font-serif-title text-2xl font-black mb-1">VICTORY!</h2>
+                <p id="gameover-desc" class="text-slate-300 text-xs sm:text-sm">You won the match!</p>
+            </div>
+            <div class="w-full bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs flex justify-around">
+                <div>Your Final: <span id="final-player-money" class="font-bold text-emerald-400">$0</span></div>
+                <div>Opponent: <span id="final-npc-money" class="font-bold text-red-400">$0</span></div>
+            </div>
+            
+            <button id="restart-match-btn" class="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold rounded-xl transition uppercase text-xs tracking-wide">
+                RETURN TO MENU
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Logic & Firebase MP Module -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Sound Engine
+        class SoundController {
+            constructor() { this.ctx = null; }
+            init() {
+                if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+            }
+            playTick() {
+                if (!soundEnabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(800 + Math.random() * 300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.04);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.04);
+            }
+            playWin(isGreen = false) {
+                if (!soundEnabled) return;
+                this.init();
+                const notes = isGreen ? [523.25, 659.25, 783.99, 1046.50, 1318.51] : [440, 554.37, 659.25, 880];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.08);
+                    gain.gain.setValueAtTime(0.3, this.ctx.currentTime + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.08 + 0.4);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + idx * 0.08);
+                    osc.stop(this.ctx.currentTime + idx * 0.08 + 0.4);
+                });
+            }
+            playLose() {
+                if (!soundEnabled) return;
+                this.init();
+                [320, 260, 200, 140].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.1);
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime + idx * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + idx * 0.1 + 0.25);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + idx * 0.1);
+                    osc.stop(this.ctx.currentTime + idx * 0.1 + 0.25);
+                });
+            }
+        }
+        const sound = new SoundController();
+        let soundEnabled = true;
+
+        // Firebase Setup & MP State
+        let db, auth, currentUser;
+        let isMultiplayer = false;
+        let isHost = false;
+        let mpRoomId = null;
+        let mpUnsubscribe = null;
+        let lastProcessedSpinId = null;
+
+        const initFirebase = async () => {
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+            onAuthStateChanged(auth, u => { currentUser = u; });
+        };
+        initFirebase();
+
+        const getAppId = () => typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const getRoomRef = (id) => doc(db, 'artifacts', getAppId(), 'public', 'data', 'rooms', id);
+
+        // Core Game State
+        let globalBankroll = 100; 
+        let playerBalance = 100;
+        let npcBalance = 100; // Used for both AI and MP opponent
+        let selectedColor = null;
+        let betAmount = 10;
+        let activeTurn = 'player';
+        let npcBet = { color: null, amount: 0 };
+        let isSpinning = false;
+        let currentRound = 1;
+        let TOTAL_ROUNDS = 10; 
+        let matchTimerSeconds = 180;
+        let timerInterval = null;
+        let matchActive = false;
+
+        // Effects State
+        let effects = {
+            lightning: { owned: false },
+            blackhole: { owned: false }
+        };
+        let activeEffect = null; 
+
+        const NPC_LIST = [
+            { name: "Rookie Rick", icon: "👦", risk: "low", greenProbability: 0.05 },
+            { name: "High-Roller Hannah", icon: "👩‍💼", risk: "high", greenProbability: 0.20 },
+            { name: "Gamble-Bot 3000", icon: "🤖", risk: "smart", greenProbability: 0.15 },
+            { name: "Lucky Luke", icon: "🍀", risk: "high", greenProbability: 0.30 },
+            { name: "The Grandmaster", icon: "👑", risk: "smart", greenProbability: 0.25 }
+        ];
+        let currentNPC = NPC_LIST[0];
+
+        // Wheel Setup
+        const canvas = document.getElementById('roulette-canvas');
+        const ctx = canvas.getContext('2d');
+        const RAW_WHEEL_SEQUENCE = [
+            { num: 0, color: 'green', code: '#10b981' }, { num: 32, color: 'red', code: '#ef4444' }, { num: 15, color: 'black', code: '#1e293b' },
+            { num: 19, color: 'red', code: '#ef4444' }, { num: 4, color: 'black', code: '#1e293b' }, { num: 21, color: 'red', code: '#ef4444' },
+            { num: 2, color: 'black', code: '#1e293b' }, { num: 25, color: 'red', code: '#ef4444' }, { num: 17, color: 'black', code: '#1e293b' },
+            { num: 34, color: 'red', code: '#ef4444' }, { num: 6, color: 'black', code: '#1e293b' }, { num: 27, color: 'red', code: '#ef4444' },
+            { num: 13, color: 'black', code: '#1e293b' }, { num: 36, color: 'red', code: '#ef4444' }, { num: 11, color: 'black', code: '#1e293b' },
+            { num: 30, color: 'red', code: '#ef4444' }, { num: 8, color: 'black', code: '#1e293b' }, { num: 23, color: 'red', code: '#ef4444' },
+            { num: 10, color: 'black', code: '#1e293b' }, { num: 5, color: 'red', code: '#ef4444' }, { num: 24, color: 'black', code: '#1e293b' },
+            { num: 16, color: 'red', code: '#ef4444' }, { num: 33, color: 'black', code: '#1e293b' }, { num: 1, color: 'red', code: '#ef4444' },
+            { num: 20, color: 'black', code: '#1e293b' }, { num: 14, color: 'red', code: '#ef4444' }, { num: 31, color: 'black', code: '#1e293b' },
+            { num: 9, color: 'red', code: '#ef4444' }, { num: 22, color: 'black', code: '#1e293b' }, { num: 18, color: 'red', code: '#ef4444' },
+            { num: 29, color: 'black', code: '#1e293b' }, { num: 7, color: 'red', code: '#ef4444' }, { num: 28, color: 'black', code: '#1e293b' },
+            { num: 12, color: 'red', code: '#ef4444' }, { num: 35, color: 'black', code: '#1e293b' }, { num: 3, color: 'red', code: '#ef4444' },
+            { num: 26, color: 'black', code: '#1e293b' }
+        ];
+        const POCKET_COUNT = RAW_WHEEL_SEQUENCE.length; 
+        let wheelRotation = 0, ballAngle = 0, ballDistanceRatio = 0.82;
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            drawWheel(wheelRotation, ballAngle, ballDistanceRatio);
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function drawWheel(wRotation = 0, bAngle = 0, currentBallRadiusRatio = 0.82) {
+            const width = canvas.getBoundingClientRect().width;
+            const height = canvas.getBoundingClientRect().height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) / 2 - 8;
+
+            ctx.clearRect(0, 0, width, height);
+            const arcSize = (2 * Math.PI) / POCKET_COUNT;
+
+            ctx.save(); ctx.translate(centerX, centerY);
+
+            for (let i = 0; i < POCKET_COUNT; i++) {
+                const startAngle = wRotation + (i * arcSize) - (Math.PI / 2) - (arcSize / 2);
+                const endAngle = startAngle + arcSize;
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, radius, startAngle, endAngle);
+                ctx.fillStyle = RAW_WHEEL_SEQUENCE[i].code; ctx.fill();
+                ctx.lineWidth = 1.2; ctx.strokeStyle = '#d97706'; ctx.stroke();
+
+                ctx.save(); ctx.rotate(startAngle + arcSize / 2);
+                ctx.textAlign = 'right'; ctx.fillStyle = '#ffffff'; ctx.font = 'bold 11px Outfit, sans-serif';
+                ctx.fillText(RAW_WHEEL_SEQUENCE[i].num, radius - 8, 3.5); ctx.restore();
+            }
+
+            ctx.beginPath(); ctx.arc(0, 0, radius * 0.55, 0, 2 * Math.PI);
+            ctx.fillStyle = '#0f172a'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#eab308'; ctx.stroke();
+            ctx.restore();
+
+            const ballRad = bAngle - (Math.PI / 2);
+            const ballRadius = radius * currentBallRadiusRatio;
+            const ballX = centerX + Math.cos(ballRad) * ballRadius;
+            const ballY = centerY + Math.sin(ballRad) * ballRadius;
+
+            ctx.beginPath(); ctx.arc(ballX + 2, ballY + 2, 6, 0, 2 * Math.PI); ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; ctx.fill();
+            ctx.beginPath(); ctx.arc(ballX, ballY, 6, 0, 2 * Math.PI); ctx.fillStyle = '#ffffff'; ctx.fill();
+            ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        setTimeout(resizeCanvas, 50);
+
+        // --- DOM Elements ---
+        const els = {
+            shopBtn: document.getElementById('open-shop-btn'),
+            closeShopBtn: document.getElementById('close-shop-btn'),
+            shopModal: document.getElementById('shop-modal'),
+            buyLight: document.getElementById('buy-lightning-btn'),
+            buyBlackhole: document.getElementById('buy-blackhole-btn'),
+            roundBtns: document.querySelectorAll('.round-btn'),
+            npcSelects: document.querySelectorAll('.npc-select-btn'),
+            createMpBtn: document.getElementById('create-mp-btn'),
+            joinMpBtn: document.getElementById('join-mp-btn'),
+            joinMpInput: document.getElementById('join-mp-code'),
+            mpWaitModal: document.getElementById('mp-waiting-modal'),
+            waitCode: document.getElementById('waiting-room-code'),
+            cancelMpBtn: document.getElementById('cancel-mp-btn'),
+            colorBtns: document.querySelectorAll('.color-btn'),
+            chipBtns: document.querySelectorAll('.chip-btn'),
+            spinBtn: document.getElementById('spin-btn'),
+            turnModalBtn: document.getElementById('turn-modal-btn'),
+            restartBtn: document.getElementById('restart-match-btn'),
+            soundToggle: document.getElementById('sound-toggle'),
+            pBalance: document.getElementById('player-balance'),
+            nBalance: document.getElementById('npc-balance'),
+            pBetTag: document.getElementById('player-bet-tag'),
+            nBetTag: document.getElementById('npc-bet-tag'),
+            pStatus: document.getElementById('player-status'),
+            nStatus: document.getElementById('npc-status'),
+            npcName: document.getElementById('npc-name'),
+            playerName: document.getElementById('player-name-tag'),
+            currBetDisplay: document.getElementById('current-bet-display'),
+            gBankroll: document.getElementById('global-bankroll'),
+            mBankroll: document.getElementById('modal-bankroll'),
+            sBankroll: document.getElementById('shop-bankroll'),
+            rDisplay: document.getElementById('round-display'),
+            mTimer: document.getElementById('match-timer'),
+            wWrapper: document.getElementById('wheel-wrapper'),
+            lightSvg: document.getElementById('lightning-svg'),
+            blackholeDiv: document.getElementById('blackhole-overlay'),
+            oppModal: document.getElementById('opponent-modal'),
+            statsBar: document.getElementById('game-stats-bar'),
+            arenaBar: document.getElementById('vs-arena-bar'),
+            pCard: document.getElementById('player-card'),
+            nCard: document.getElementById('npc-card'),
+            betControls: document.getElementById('betting-controls'),
+            spinBadge: document.getElementById('spin-badge'),
+            spinTurnTxt: document.getElementById('spinner-turn-text'),
+            countTimer: document.getElementById('countdown-timer'),
+            histContainer: document.getElementById('history-container'),
+            mpDisplay: document.getElementById('mp-room-display'),
+            mpCodeDisp: document.getElementById('mp-room-code'),
+            turnModal: document.getElementById('turn-modal'),
+            goModal: document.getElementById('gameover-modal')
+        };
+
+        // --- Shop Logic ---
+        function updateShopButtons() {
+            if(effects.lightning.owned) {
+                els.buyLight.textContent = activeEffect === 'lightning' ? 'EQUIPPED' : 'EQUIP';
+                els.buyLight.className = `shop-btn px-3 py-2 text-white font-black rounded-xl text-[10px] uppercase min-w-[80px] ${activeEffect === 'lightning' ? 'bg-emerald-600' : 'bg-slate-600 hover:bg-slate-500'}`;
+            }
+            if(effects.blackhole.owned) {
+                els.buyBlackhole.textContent = activeEffect === 'blackhole' ? 'EQUIPPED' : 'EQUIP';
+                els.buyBlackhole.className = `shop-btn px-3 py-2 text-white font-black rounded-xl text-[10px] uppercase min-w-[80px] ${activeEffect === 'blackhole' ? 'bg-emerald-600' : 'bg-slate-600 hover:bg-slate-500'}`;
+            }
+        }
+
+        els.shopBtn.addEventListener('click', () => { els.shopModal.classList.remove('opacity-0', 'pointer-events-none'); });
+        els.closeShopBtn.addEventListener('click', () => { els.shopModal.classList.add('opacity-0', 'pointer-events-none'); });
+
+        els.buyLight.addEventListener('click', () => {
+            if(effects.lightning.owned) { activeEffect = 'lightning'; sound.playTick(); updateShopButtons(); return; }
+            if(globalBankroll >= 250) {
+                globalBankroll -= 250; effects.lightning.owned = true; activeEffect = 'lightning';
+                updateUI(); updateShopButtons(); sound.playWin(true);
+            } else { sound.playLose(); }
+        });
+
+        els.buyBlackhole.addEventListener('click', () => {
+            if(effects.blackhole.owned) { activeEffect = 'blackhole'; sound.playTick(); updateShopButtons(); return; }
+            if(globalBankroll >= 500) {
+                globalBankroll -= 500; effects.blackhole.owned = true; activeEffect = 'blackhole';
+                updateUI(); updateShopButtons(); sound.playWin(true);
+            } else { sound.playLose(); }
+        });
+
+        // --- Round Setup ---
+        els.roundBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                els.roundBtns.forEach(b => b.className = "round-btn px-3 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition");
+                btn.className = "round-btn px-3 py-1 rounded-xl bg-yellow-500 text-slate-950 text-xs font-black border border-yellow-400 transition";
+                TOTAL_ROUNDS = parseInt(btn.getAttribute('data-rounds'), 10);
+            });
+        });
+
+        // --- Core Single Player Functions ---
+        els.npcSelects.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.getAttribute('data-npc'), 10);
+                startSPMatch(NPC_LIST[idx]);
+            });
+        });
+
+        function resetBoard() {
+            els.wWrapper.classList.remove('lightning-knockout', 'blackhole-suck-board');
+            els.wWrapper.style.opacity = '1'; els.wWrapper.style.transform = 'scale(1)';
+            els.wWrapper.style.filter = 'blur(0px)';
+            els.lightSvg.classList.add('hidden');
+            els.lightSvg.classList.remove('lightning-strike-anim');
+            els.blackholeDiv.classList.add('hidden');
+            els.histContainer.innerHTML = '';
+            
+            // Clean modal states safely
+            els.goModal.classList.add('opacity-0', 'pointer-events-none');
+            els.turnModal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function startSPMatch(npc) {
+            isMultiplayer = false; currentNPC = npc;
+            playerBalance = 100; npcBalance = 100;
+            currentRound = 1; matchTimerSeconds = 180;
+            matchActive = true; activeTurn = 'player'; selectedColor = null;
+
+            resetBoard();
+            els.npcName.innerHTML = `${npc.name} ${npc.icon}`;
+            els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
+            
+            els.oppModal.classList.add('hidden');
+            els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
+            els.mpDisplay.classList.add('hidden');
+            
+            updateTurnIndicators(); updateUI(); startMatchTimer();
+        }
+
+        // --- Multiplayer Functions ---
+        els.createMpBtn.addEventListener('click', async () => {
+            if(!currentUser) { alert("Connecting to servers..."); return; }
+            const code = Math.random().toString(36).substring(2, 6).toUpperCase();
+            
+            try {
+                await setDoc(getRoomRef(code), {
+                    host: currentUser.uid, guest: null,
+                    hostBalance: 100, guestBalance: 100,
+                    totalRounds: TOTAL_ROUNDS, currentRound: 1,
+                    status: 'waiting', activeTurn: currentUser.uid, spinData: null
+                });
+                mpRoomId = code; isHost = true;
+                els.oppModal.classList.add('hidden');
+                els.waitCode.textContent = code;
+                els.mpWaitModal.classList.remove('hidden');
+                listenToRoom(code);
+            } catch (e) { alert("Failed to create room."); console.error(e); }
+        });
+
+        els.joinMpBtn.addEventListener('click', async () => {
+            if(!currentUser) return;
+            const code = els.joinMpInput.value.trim().toUpperCase();
+            if(!code) return;
+            
+            try {
+                const docSnap = await getDoc(getRoomRef(code));
+                if(docSnap.exists() && !docSnap.data().guest) {
+                    await updateDoc(getRoomRef(code), { guest: currentUser.uid, status: 'playing' });
+                    mpRoomId = code; isHost = false;
+                    els.oppModal.classList.add('hidden');
+                    listenToRoom(code);
+                } else { alert("Invalid Room or Room Full!"); }
+            } catch (e) { alert("Error joining room."); }
+        });
+
+        els.cancelMpBtn.addEventListener('click', async () => {
+            if(mpUnsubscribe) mpUnsubscribe();
+            
+            if(isHost && mpRoomId) {
+                try { await deleteDoc(getRoomRef(mpRoomId)); } catch(e) { console.log(e); }
+            }
+            
+            isMultiplayer = false; mpRoomId = null; isHost = false;
+            els.mpWaitModal.classList.add('hidden');
+            els.oppModal.classList.remove('hidden');
+        });
+
+        function listenToRoom(code) {
+            mpUnsubscribe = onSnapshot(getRoomRef(code), (docSnap) => {
+                const data = docSnap.data();
+                if(!data) {
+                    // Room was deleted
+                    if(matchActive && !isHost) endMatch("Host disconnected.");
+                    return;
+                }
+
+                // Game starts
+                if(data.status === 'playing' && !matchActive) {
+                    els.mpWaitModal.classList.add('hidden');
+                    isMultiplayer = true; matchActive = true;
+                    TOTAL_ROUNDS = data.totalRounds;
+                    matchTimerSeconds = 180;
+                    resetBoard();
+                    
+                    els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> Opponent`;
+                    els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
+                    els.mpCodeDisp.textContent = code;
+                    els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
+                    els.mpDisplay.classList.remove('hidden');
+                    
+                    startMatchTimer();
+                }
+
+                if(matchActive) {
+                    playerBalance = isHost ? data.hostBalance : data.guestBalance;
+                    npcBalance = isHost ? data.guestBalance : data.hostBalance;
+                    currentRound = data.currentRound;
+                    activeTurn = data.activeTurn === currentUser.uid ? 'player' : 'npc';
+                    
+                    updateUI(); updateTurnIndicators();
+
+                    // Detect Spin Trigger
+                    if(data.status === 'spinning' && data.spinData) {
+                        if(data.spinData.spinId !== lastProcessedSpinId) {
+                            lastProcessedSpinId = data.spinData.spinId;
+                            const who = data.activeTurn === currentUser.uid ? 'player' : 'npc';
+                            startSpinSequence(who, data.spinData.color, data.spinData.amount, data.spinData.pocketIndex);
+                        }
+                    }
+
+                    if(data.status === 'finished') {
+                        endMatch(data.reason);
+                    }
+                }
+            }, (error) => { console.error("Firebase Sync Error", error); });
+        }
+
+        // --- Game Sync Logic ---
+        function startMatchTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (!matchActive || isSpinning) return;
+                matchTimerSeconds--;
+                const mins = Math.floor(matchTimerSeconds / 60).toString().padStart(2, '0');
+                const secs = (matchTimerSeconds % 60).toString().padStart(2, '0');
+                els.mTimer.textContent = `${mins}:${secs}`;
+                if (matchTimerSeconds <= 0 && (!isMultiplayer || (isMultiplayer && isHost))) {
+                    if(isMultiplayer) {
+                        updateDoc(getRoomRef(mpRoomId), { status: 'finished', reason: "Time's Up!" });
+                    } else endMatch("Time's Up!");
+                }
+            }, 1000);
+        }
+
+        function updateTurnIndicators() {
+            if (activeTurn === 'player') {
+                els.pCard.classList.add('active-turn-ring'); els.nCard.classList.remove('active-turn-ring');
+                els.pStatus.className = "text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-600/40 px-2 py-0.5 rounded font-extrabold uppercase animate-pulse";
+                els.pStatus.textContent = "YOUR TURN";
+                els.nStatus.className = "text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-bold uppercase";
+                els.nStatus.textContent = "WAITING";
+                els.betControls.classList.remove('opacity-40', 'pointer-events-none');
+            } else {
+                els.nCard.classList.add('active-turn-ring'); els.pCard.classList.remove('active-turn-ring');
+                els.nStatus.className = "text-[10px] bg-amber-950 text-amber-400 border border-amber-600/40 px-2 py-0.5 rounded font-extrabold uppercase animate-pulse";
+                els.nStatus.textContent = isMultiplayer ? "OPPONENT TURN" : "NPC TURN";
+                els.pStatus.className = "text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-bold uppercase";
+                els.pStatus.textContent = "WAITING";
+                els.betControls.classList.add('opacity-40', 'pointer-events-none');
+            }
+        }
+
+        // --- SP NPC AI (Fixed Bets) ---
+        function generateNPCBet() {
+            if (npcBalance <= 0) return { color: null, amount: 0 };
+
+            const color = Math.random() < currentNPC.greenProbability ? 'green' : (Math.random() > 0.5 ? 'red' : 'black');
+            
+            const validChips = [10, 25, 50, 100, npcBalance].filter(c => c <= npcBalance);
+            if(validChips.length === 0) validChips.push(npcBalance); // fallback
+
+            let amount = 10;
+            if (currentNPC.risk === 'low') amount = validChips[0];
+            else if (currentNPC.risk === 'high') amount = validChips[validChips.length - 1 <= 100 ? validChips.length - 1 : validChips.length - 2] || npcBalance;
+            else amount = Math.random() > 0.5 ? validChips[Math.floor(validChips.length/2)] : validChips[0];
+            
+            return { color, amount };
+        }
+
+        // --- Player Actions ---
+        els.colorBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (isSpinning || !matchActive || activeTurn !== 'player') return;
+                sound.init();
+                els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-yellow-400'); b.querySelector('.bet-indicator').classList.add('hidden'); });
+                btn.classList.add('ring-4', 'ring-yellow-400'); btn.querySelector('.bet-indicator').classList.remove('hidden');
+                selectedColor = btn.getAttribute('data-color');
+                els.pBetTag.textContent = `$${betAmount} on ${selectedColor.toUpperCase()}`;
+                validateBet();
+            });
+        });
+
+        els.chipBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (isSpinning || !matchActive || activeTurn !== 'player') return;
+                sound.init();
+                els.chipBtns.forEach(b => b.classList.remove('chip-selected')); btn.classList.add('chip-selected');
+                const val = btn.getAttribute('data-amount');
+                betAmount = (val === 'all') ? playerBalance : parseInt(val, 10);
+                if (selectedColor) els.pBetTag.textContent = `$${betAmount} on ${selectedColor.toUpperCase()}`;
+                updateBetDisplay(); validateBet();
+            });
+        });
+
+        function updateBetDisplay() {
+            if (betAmount > playerBalance) betAmount = Math.max(0, playerBalance);
+            els.currBetDisplay.textContent = `Selected Bet: $${betAmount.toLocaleString()}`;
+        }
+        function validateBet() { els.spinBtn.disabled = !(selectedColor && betAmount > 0 && playerBalance >= betAmount && !isSpinning && matchActive && activeTurn === 'player'); }
+        
+        function updateUI() {
+            els.pBalance.textContent = `$${Math.max(0, playerBalance).toLocaleString()}`;
+            els.nBalance.textContent = `$${Math.max(0, npcBalance).toLocaleString()}`;
+            els.gBankroll.textContent = `$${globalBankroll.toLocaleString()}`;
+            els.mBankroll.textContent = `$${globalBankroll.toLocaleString()}`;
+            els.sBankroll.textContent = `$${globalBankroll.toLocaleString()}`;
+            els.rDisplay.textContent = `${currentRound} / ${TOTAL_ROUNDS}`;
+            updateBetDisplay(); validateBet();
+        }
+
+        // --- Spin Triggers ---
+        els.spinBtn.addEventListener('click', () => {
+            if (isSpinning || activeTurn !== 'player' || !selectedColor || betAmount > playerBalance) return;
+            
+            if(isMultiplayer) {
+                const pIndex = Math.floor(Math.random() * POCKET_COUNT);
+                updateDoc(getRoomRef(mpRoomId), {
+                    status: 'spinning',
+                    spinData: { color: selectedColor, amount: betAmount, pocketIndex: pIndex, spinId: Date.now() }
+                });
+                els.spinBtn.disabled = true;
+                // Animation starts via onSnapshot listener
+            } else {
+                startSpinSequence('player', selectedColor, betAmount);
+            }
+        });
+
+        function triggerNPCTurn() {
+            if(isMultiplayer) return; // DB listeners handle MP turn changes
+            npcBet = generateNPCBet();
+            if (npcBet.amount <= 0) { endMatch("NPC Bankrupt!"); return; }
+            els.nBetTag.textContent = `$${npcBet.amount} on ${npcBet.color.toUpperCase()}`;
+            setTimeout(() => { startSpinSequence('npc', npcBet.color, npcBet.amount); }, 1200);
+        }
+
+        // --- Core Animation Engine ---
+        function startSpinSequence(who, color, amount, forcedPocketIndex = null) {
+            sound.init(); isSpinning = true; els.spinBtn.disabled = true;
+            els.spinTurnTxt.textContent = who === 'player' ? "Your Spin:" : (isMultiplayer ? "Opponent Spin:" : `${currentNPC.name}'s Spin:`);
+            els.spinBadge.classList.remove('hidden');
+
+            const winningIndex = forcedPocketIndex !== null ? forcedPocketIndex : Math.floor(Math.random() * POCKET_COUNT);
+            const winningPocket = RAW_WHEEL_SEQUENCE[winningIndex];
+
+            const SPIN_DURATION = 5000; const startTime = performance.now(); const arcSize = (2 * Math.PI) / POCKET_COUNT;
+            
+            const currentMod = wheelRotation % (2 * Math.PI);
+            const targetMod = -(winningIndex * arcSize); 
+            let rotationNeeded = targetMod - currentMod;
+            while (rotationNeeded <= 0) rotationNeeded += 2 * Math.PI;
+            const targetWheelRotation = wheelRotation + rotationNeeded + Math.PI * 2 * 5;
+
+            const currentBallMod = ballAngle % (2 * Math.PI);
+            let ballRotationNeeded = 0 - currentBallMod;
+            while (ballRotationNeeded >= 0) ballRotationNeeded -= 2 * Math.PI;
+            const targetBallAngle = ballAngle + ballRotationNeeded - Math.PI * 2 * 10;
+
+            const initialWheelRot = wheelRotation, initialBallAng = ballAngle;
+            let lastTickTime = 0;
+
+            function animateSpin(currentTime) {
+                const elapsedTime = currentTime - startTime;
+                const progress = Math.min(elapsedTime / SPIN_DURATION, 1);
+                els.countTimer.textContent = Math.max(0, (SPIN_DURATION - elapsedTime) / 1000).toFixed(1);
+
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                wheelRotation = initialWheelRot + easeOut * (targetWheelRotation - initialWheelRot);
+                ballAngle = initialBallAng + easeOut * (targetBallAngle - initialBallAng);
+
+                if (elapsedTime - lastTickTime > (80 + easeOut * 280) && progress < 0.95) {
+                    sound.playTick(); lastTickTime = elapsedTime;
+                }
+
+                ballDistanceRatio = (progress > 0.7) ? 0.82 - (((progress - 0.7) / 0.3) * 0.27) : 0.82;
+                drawWheel(wheelRotation, ballAngle, ballDistanceRatio);
+
+                if (progress < 1) { requestAnimationFrame(animateSpin); } 
+                else {
+                    els.spinBadge.classList.add('hidden'); isSpinning = false;
+                    wheelRotation = targetWheelRotation; ballAngle = targetBallAngle;
+                    drawWheel(wheelRotation, ballAngle, 0.55);
+                    resolveTurn(who, color, amount, winningPocket);
+                }
+            }
+            requestAnimationFrame(animateSpin);
+        }
+
+        // --- Turn Resolution ---
+        function resolveTurn(who, color, amount, pocket) {
+            const isWin = (color === pocket.color);
+            const multiplier = (color === 'green') ? 25 : 2;
+            let netProfit = isWin ? amount * multiplier : 0;
+            let localPlayerBalance = playerBalance;
+            let localNpcBalance = npcBalance;
+
+            if (who === 'player') {
+                if (isWin) localPlayerBalance += netProfit; else localPlayerBalance -= amount;
+                if(isWin) sound.playWin(color === 'green'); else sound.playLose();
+            } else {
+                if (isWin) localNpcBalance += netProfit; else localNpcBalance -= amount;
+                if(isWin) sound.playLose(); else sound.playWin(true);
+            }
+
+            if(!isMultiplayer) {
+                playerBalance = localPlayerBalance; npcBalance = localNpcBalance;
+            }
+
+            addHistoryBadge(pocket); updateUI();
+            showTurnModal(who, isWin, pocket, amount, netProfit);
+
+            if(isMultiplayer && who === 'player') {
+                getDoc(getRoomRef(mpRoomId)).then(s => {
+                    if(!s.exists()) return;
+                    const d = s.data();
+                    const nxtUid = (d.activeTurn === d.host) ? d.guest : d.host;
+                    let nxtRnd = d.currentRound;
+                    if(nxtUid === d.host) nxtRnd++; 
+                    
+                    updateDoc(getRoomRef(mpRoomId), {
+                        hostBalance: isHost ? localPlayerBalance : localNpcBalance,
+                        guestBalance: isHost ? localNpcBalance : localPlayerBalance,
+                        activeTurn: nxtUid,
+                        currentRound: nxtRnd,
+                        status: 'playing'
+                    });
+                });
+            }
+        }
+
+        function showTurnModal(who, isWin, pocket, bet, profit) {
+            if (who === 'player') {
+                if (isWin) {
+                    els.turnIcon.className = "w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/50";
+                    els.turnIcon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
+                    els.turnTitle.textContent = "YOU WON!"; els.turnTitle.className = "font-serif-title text-xl font-black mb-1 text-emerald-400";
+                    els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
+                    els.turnAmt.textContent = `+$${profit.toLocaleString()} Profit`; els.turnAmt.className = "text-xl font-black text-emerald-400";
+                    confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
+                } else {
+                    els.turnIcon.className = "w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-xl bg-red-500/20 text-red-400 border border-red-500/50";
+                    els.turnIcon.innerHTML = '<i class="fa-solid fa-skull"></i>';
+                    els.turnTitle.textContent = "YOU LOST!"; els.turnTitle.className = "font-serif-title text-xl font-black mb-1 text-red-500";
+                    els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
+                    els.turnAmt.textContent = `-$${bet.toLocaleString()}`; els.turnAmt.className = "text-2xl font-black text-red-400";
+                }
+                els.turnModalBtn.textContent = isMultiplayer ? "CONTINUE TO OPPONENT" : `CONTINUE TO ${currentNPC.name.toUpperCase()}`;
+            } else {
+                const oppName = isMultiplayer ? "OPPONENT" : currentNPC.name.toUpperCase();
+                if (isWin) {
+                    els.turnIcon.className = "w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-xl bg-red-500/20 text-red-400 border border-red-500/50";
+                    els.turnIcon.innerHTML = '<i class="fa-solid fa-robot"></i>';
+                    els.turnTitle.textContent = `${oppName} WON!`; els.turnTitle.className = "font-serif-title text-xl font-black mb-1 text-amber-400";
+                    els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
+                    els.turnAmt.textContent = `+$${profit.toLocaleString()} Profit`; els.turnAmt.className = "text-xl font-black text-amber-400";
+                } else {
+                    els.turnIcon.className = "w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/50";
+                    els.turnIcon.innerHTML = '<i class="fa-solid fa-face-smile"></i>';
+                    els.turnTitle.textContent = `${oppName} LOST!`; els.turnTitle.className = "font-serif-title text-xl font-black mb-1 text-slate-300";
+                    els.turnDesc.textContent = `Missed the bet!`;
+                    els.turnAmt.textContent = `-$${bet.toLocaleString()}`; els.turnAmt.className = "text-2xl font-black text-slate-400";
+                }
+                els.turnModalBtn.textContent = "CONTINUE TO YOUR TURN";
+            }
+            els.turnModal.classList.remove('opacity-0', 'pointer-events-none');
+            els.turnModal.querySelector('div').classList.remove('scale-90'); els.turnModal.querySelector('div').classList.add('scale-100');
+        }
+
+        els.turnIcon = document.getElementById('turn-icon-container'); els.turnTitle = document.getElementById('turn-title');
+        els.turnDesc = document.getElementById('turn-desc'); els.turnAmt = document.getElementById('turn-amount');
+
+        els.turnModalBtn.addEventListener('click', () => {
+            els.turnModal.classList.add('opacity-0', 'pointer-events-none');
+            els.turnModal.querySelector('div').classList.remove('scale-100'); els.turnModal.querySelector('div').classList.add('scale-90');
+
+            if (playerBalance <= 0 || npcBalance <= 0) {
+                const loseTxt = isMultiplayer ? "Opponent" : currentNPC.name;
+                const reason = npcBalance <= 0 ? `${loseTxt} Went Bankrupt!` : "You Went Bankrupt!";
+                if(isMultiplayer && isHost) updateDoc(getRoomRef(mpRoomId), { status: 'finished', reason });
+                else if (!isMultiplayer) endMatch(reason);
+                return;
+            }
+
+            if(!isMultiplayer) {
+                if (activeTurn === 'player') {
+                    activeTurn = 'npc'; updateTurnIndicators(); triggerNPCTurn();
+                } else {
+                    activeTurn = 'player'; currentRound++;
+                    if (currentRound > TOTAL_ROUNDS) { endMatch("Match Rounds Complete!"); return; }
+                    els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-yellow-400'); b.querySelector('.bet-indicator').classList.add('hidden'); });
+                    selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
+                    updateTurnIndicators(); updateUI();
+                }
+            } else {
+                els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-yellow-400'); b.querySelector('.bet-indicator').classList.add('hidden'); });
+                selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
+            }
+        });
+
+        function endMatch(reason) {
+            matchActive = false; clearInterval(timerInterval);
+
+            const playerWon = playerBalance > npcBalance; const isTie = playerBalance === npcBalance;
+            document.getElementById('final-player-money').textContent = `$${Math.max(0, playerBalance).toLocaleString()}`;
+            document.getElementById('final-npc-money').textContent = `$${Math.max(0, npcBalance).toLocaleString()}`;
+
+            const iconContainer = document.getElementById('gameover-icon-container');
+            const title = document.getElementById('gameover-title'); const desc = document.getElementById('gameover-desc');
+            const oppName = isMultiplayer ? "Opponent" : currentNPC.name;
+
+            if (playerWon) {
+                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center text-3xl shadow-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/50";
+                iconContainer.innerHTML = '<i class="fa-solid fa-trophy"></i>';
+                title.textContent = "VICTORY!"; title.className = "font-serif-title text-2xl font-black mb-1 text-emerald-400";
+                desc.textContent = `${reason} You beat the ${oppName}!`;
+
+                globalBankroll += 100; updateUI();
+
+                if (activeEffect === 'lightning') {
+                    els.lightSvg.classList.remove('hidden');
+                    els.lightSvg.classList.add('lightning-strike-anim');
+                    els.wWrapper.classList.add('lightning-knockout');
+                    setTimeout(() => { 
+                        els.wWrapper.classList.remove('lightning-knockout'); 
+                        els.lightSvg.classList.remove('lightning-strike-anim');
+                        els.lightSvg.classList.add('hidden');
+                        showGameOverModal(); 
+                    }, 3000); 
+                    return;
+                } else if (activeEffect === 'blackhole') {
+                    els.blackholeDiv.classList.remove('hidden');
+                    els.wWrapper.classList.add('blackhole-suck-board');
+                    setTimeout(() => { 
+                        els.wWrapper.classList.remove('blackhole-suck-board');
+                        els.wWrapper.style.opacity = '0'; 
+                        els.blackholeDiv.classList.add('hidden');
+                        showGameOverModal(); 
+                    }, 3000); 
+                    return;
+                }
+                confetti({ particleCount: 130, spread: 90, origin: { y: 0.6 } });
+            } else if (isTie) {
+                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center text-3xl shadow-xl bg-yellow-500/20 text-yellow-400 border border-yellow-500/50";
+                iconContainer.innerHTML = '<i class="fa-solid fa-handshake"></i>';
+                title.textContent = "IT'S A DRAW!"; title.className = "font-serif-title text-2xl font-black mb-1 text-yellow-400";
+                desc.textContent = `${reason} You and ${oppName} tied!`;
+            } else {
+                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center text-3xl shadow-xl bg-red-500/20 text-red-400 border border-red-500/50";
+                iconContainer.innerHTML = '<i class="fa-solid fa-skull"></i>';
+                title.textContent = "DEFEAT!"; title.className = "font-serif-title text-2xl font-black mb-1 text-red-500";
+                desc.textContent = `${reason} ${oppName} won with more cash!`;
+            }
+            showGameOverModal();
+        }
+
+        function showGameOverModal() {
+            updateUI();
+            els.goModal.classList.remove('opacity-0', 'pointer-events-none');
+            els.goModal.querySelector('div').classList.remove('scale-90'); els.goModal.querySelector('div').classList.add('scale-100');
+            confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        }
+
+        // Return to Menu / Match Restart Logic
+        els.restartBtn.addEventListener('click', async () => {
+            if(mpUnsubscribe) mpUnsubscribe();
+            if(isMultiplayer && isHost && mpRoomId) {
+                try { await deleteDoc(getRoomRef(mpRoomId)); } catch(e) {}
+            }
+            
+            isMultiplayer = false; mpRoomId = null; isHost = false;
+
+            els.goModal.classList.add('opacity-0', 'pointer-events-none');
+            els.goModal.querySelector('div').classList.remove('scale-100'); els.goModal.querySelector('div').classList.add('scale-90');
+            els.statsBar.classList.add('hidden'); els.arenaBar.classList.add('hidden');
+            
+            resetBoard();
+            els.oppModal.classList.remove('hidden');
+            els.mpDisplay.classList.add('hidden');
+        });
+
+        function addHistoryBadge(pocket) {
+            const badge = document.createElement('div');
+            badge.className = `w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold border shadow-sm ${
+                pocket.color === 'green' ? 'bg-emerald-600 text-white border-emerald-400' :
+                pocket.color === 'red' ? 'bg-red-600 text-white border-red-400' : 'bg-slate-900 text-slate-200 border-slate-700'
+            }`;
+            badge.textContent = pocket.label;
+            els.histContainer.insertBefore(badge, els.histContainer.firstChild);
+            if (els.histContainer.children.length > 7) els.histContainer.removeChild(els.histContainer.lastChild);
+        }
+
+        els.soundToggle.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-icon').className = soundEnabled ? 'fa-solid fa-volume-high text-base' : 'fa-solid fa-volume-xmark text-base text-slate-500';
+        });
+
+    </script>
+</body>
+</html>
