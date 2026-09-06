@@ -408,12 +408,8 @@
         </div>
     </div>
 
-    <!-- Main Logic & Firebase MP Module -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    <!-- Main Logic & LocalStorage/BroadcastChannel Multiplayer Engine for GitHub Pages -->
+    <script>
         // Sound Engine
         class SoundController {
             constructor() { this.ctx = null; }
@@ -469,36 +465,11 @@
         const sound = new SoundController();
         let soundEnabled = true;
 
-        // Firebase Standalone Config Setup for GitHub Pages
-        let db, auth, currentUser;
+        // --- Zero-Server BroadcastChannel + LocalStorage Multiplayer Engine for GitHub Pages ---
         let isMultiplayer = false;
         let isHost = false;
         let mpRoomId = null;
-        let mpUnsubscribe = null;
-        let lastProcessedSpinId = null;
-
-        const initFirebase = async () => {
-            try {
-                // Safe standalone Firebase fallback for static hosting like GitHub Pages
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-                    apiKey: "AIzaSyDummyKeyForGitHubPagesHostingOnly12345",
-                    authDomain: "roulette-battles-mp.firebaseapp.com",
-                    projectId: "roulette-battles-mp"
-                };
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                await signInAnonymously(auth);
-                onAuthStateChanged(auth, u => { currentUser = u; });
-            } catch (err) {
-                console.log("Offline / Standalone mode active", err);
-            }
-        };
-        initFirebase();
-
-        const getAppId = () => typeof __app_id !== 'undefined' ? __app_id : 'github-pages-roulette-app';
-        const getRoomRef = (id) => doc(db, 'artifacts', getAppId(), 'public', 'data', 'rooms', id);
+        let mpChannel = null;
 
         // Core Game State
         let globalBankroll = 100; 
@@ -728,101 +699,82 @@
             updateTurnIndicators(); updateUI(); startMatchTimer();
         }
 
-        // --- Multiplayer Functions ---
-        els.createMpBtn.addEventListener('click', async () => {
-            if(!db) { alert("Connecting to multiplayer server... please try again in 2 seconds."); return; }
+        // --- Zero-Server BroadcastChannel Multiplayer Implementation ---
+        els.createMpBtn.addEventListener('click', () => {
             const code = Math.random().toString(36).substring(2, 6).toUpperCase();
+            mpRoomId = code; isHost = true;
             
-            try {
-                await setDoc(getRoomRef(code), {
-                    host: currentUser ? currentUser.uid : 'host_user', guest: null,
-                    hostBalance: 100, guestBalance: 100,
-                    totalRounds: TOTAL_ROUNDS, currentRound: 1,
-                    status: 'waiting', activeTurn: currentUser ? currentUser.uid : 'host_user', spinData: null
-                });
-                mpRoomId = code; isHost = true;
-                els.oppModal.classList.add('hidden');
-                els.waitCode.textContent = code;
-                els.mpWaitModal.classList.remove('hidden');
-                listenToRoom(code);
-            } catch (e) { alert("Failed to create room. Check connection."); console.error(e); }
+            localStorage.setItem(`room_${code}`, JSON.stringify({
+                hostBal: 100, guestBal: 100, rounds: TOTAL_ROUNDS, round: 1, turn: 'host', status: 'waiting'
+            }));
+
+            mpChannel = new BroadcastChannel(`roulette_room_${code}`);
+            mpChannel.onmessage = handleMpMessage;
+
+            els.oppModal.classList.add('hidden');
+            els.waitCode.textContent = code;
+            els.mpWaitModal.classList.remove('hidden');
         });
 
-        els.joinMpBtn.addEventListener('click', async () => {
-            if(!db) { alert("Connecting to multiplayer server..."); return; }
+        els.joinMpBtn.addEventListener('click', () => {
             const code = els.joinMpInput.value.trim().toUpperCase();
             if(!code) return;
-            
-            try {
-                const docRef = getRoomRef(code);
-                const docSnap = await getDoc(docRef);
-                if(docSnap.exists() && !docSnap.data().guest) {
-                    await updateDoc(docRef, { guest: currentUser ? currentUser.uid : 'guest_user', status: 'playing' });
-                    mpRoomId = code; isHost = false;
-                    els.oppModal.classList.add('hidden');
-                    listenToRoom(code);
-                } else { alert("Invalid Room or Room Full!"); }
-            } catch (e) { alert("Error joining room."); }
+            const raw = localStorage.getItem(`room_${code}`);
+            if(!raw) { alert("Room not found!"); return; }
+
+            mpRoomId = code; isHost = false;
+            mpChannel = new BroadcastChannel(`roulette_room_${code}`);
+            mpChannel.onmessage = handleMpMessage;
+
+            mpChannel.postMessage({ type: 'JOINED' });
+            startMPGame(JSON.parse(raw).rounds);
         });
 
-        els.cancelMpBtn.addEventListener('click', async () => {
-            if(mpUnsubscribe) mpUnsubscribe();
-            
-            if(isHost && mpRoomId && db) {
-                try { await deleteDoc(getRoomRef(mpRoomId)); } catch(e) { console.log(e); }
-            }
-            
-            isMultiplayer = false; mpRoomId = null; isHost = false;
+        els.cancelMpBtn.addEventListener('click', () => {
+            if(mpRoomId) localStorage.removeItem(`room_${mpRoomId}`);
+            if(mpChannel) mpChannel.close();
             els.mpWaitModal.classList.add('hidden');
             els.oppModal.classList.remove('hidden');
         });
 
-        function listenToRoom(code) {
-            mpUnsubscribe = onSnapshot(getRoomRef(code), (docSnap) => {
-                const data = docSnap.data();
-                if(!data) {
-                    if(matchActive && !isHost) endMatch("Host disconnected.");
-                    return;
-                }
+        function startMPGame(rounds) {
+            els.mpWaitModal.classList.add('hidden');
+            isMultiplayer = true; matchActive = true;
+            TOTAL_ROUNDS = rounds; matchTimerSeconds = 180;
+            resetBoard();
 
-                if(data.status === 'playing' && !matchActive) {
-                    els.mpWaitModal.classList.add('hidden');
-                    isMultiplayer = true; matchActive = true;
-                    TOTAL_ROUNDS = data.totalRounds;
-                    matchTimerSeconds = 180;
-                    resetBoard();
-                    
-                    els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> Opponent`;
-                    els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
-                    els.mpCodeDisp.textContent = code;
-                    els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
-                    els.mpDisplay.classList.remove('hidden');
-                    
-                    startMatchTimer();
-                }
+            els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> Friend`;
+            els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
+            els.mpCodeDisp.textContent = mpRoomId;
+            els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
+            els.mpDisplay.classList.remove('hidden');
 
-                if(matchActive) {
-                    const myUid = currentUser ? currentUser.uid : (isHost ? 'host_user' : 'guest_user');
-                    playerBalance = isHost ? data.hostBalance : data.guestBalance;
-                    npcBalance = isHost ? data.guestBalance : data.hostBalance;
-                    currentRound = data.currentRound;
-                    activeTurn = data.activeTurn === myUid ? 'player' : 'npc';
-                    
-                    updateUI(); updateTurnIndicators();
+            activeTurn = isHost ? 'player' : 'npc';
+            updateTurnIndicators(); updateUI(); startMatchTimer();
+        }
 
-                    if(data.status === 'spinning' && data.spinData) {
-                        if(data.spinData.spinId !== lastProcessedSpinId) {
-                            lastProcessedSpinId = data.spinData.spinId;
-                            const who = data.activeTurn === myUid ? 'player' : 'npc';
-                            startSpinSequence(who, data.spinData.color, data.spinData.amount, data.spinData.pocketIndex);
-                        }
-                    }
-
-                    if(data.status === 'finished') {
-                        endMatch(data.reason);
-                    }
-                }
-            }, (error) => { console.error("Firebase Sync Error", error); });
+        function handleMpMessage(e) {
+            const msg = e.data;
+            if(msg.type === 'JOINED' && isHost) {
+                startMPGame(TOTAL_ROUNDS);
+                mpChannel.postMessage({ type: 'START', rounds: TOTAL_ROUNDS });
+            }
+            if(msg.type === 'START' && !isHost) {
+                startMPGame(msg.rounds);
+            }
+            if(msg.type === 'SPIN') {
+                startSpinSequence(activeTurn === 'player' ? 'npc' : 'player', msg.color, msg.amount, msg.pocketIndex);
+            }
+            if(msg.type === 'SYNC') {
+                playerBalance = isHost ? msg.hostBal : msg.guestBal;
+                npcBalance = isHost ? msg.guestBal : msg.hostBal;
+                currentRound = msg.round;
+                activeTurn = msg.turn === (isHost ? 'host' : 'guest') ? 'player' : 'npc';
+                updateUI(); updateTurnIndicators();
+            }
+            if(msg.type === 'FINISH') {
+                endMatch(msg.reason);
+            }
         }
 
         // --- Game Sync Logic ---
@@ -836,7 +788,8 @@
                 els.mTimer.textContent = `${mins}:${secs}`;
                 if (matchTimerSeconds <= 0 && (!isMultiplayer || (isMultiplayer && isHost))) {
                     if(isMultiplayer) {
-                        updateDoc(getRoomRef(mpRoomId), { status: 'finished', reason: "Time's Up!" });
+                        mpChannel.postMessage({ type: 'FINISH', reason: "Time's Up!" });
+                        endMatch("Time's Up!");
                     } else endMatch("Time's Up!");
                 }
             }, 1000);
@@ -853,7 +806,7 @@
             } else {
                 els.nCard.classList.add('active-turn-ring'); els.pCard.classList.remove('active-turn-ring');
                 els.nStatus.className = "text-[10px] bg-amber-950 text-amber-400 border border-amber-600/40 px-2 py-0.5 rounded font-extrabold uppercase animate-pulse";
-                els.nStatus.textContent = isMultiplayer ? "OPPONENT TURN" : "NPC TURN";
+                els.nStatus.textContent = isMultiplayer ? "FRIEND'S TURN" : "NPC TURN";
                 els.pStatus.className = "text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-bold uppercase";
                 els.pStatus.textContent = "WAITING";
                 els.betControls.classList.add('opacity-40', 'pointer-events-none');
@@ -919,11 +872,9 @@
             
             if(isMultiplayer) {
                 const pIndex = Math.floor(Math.random() * POCKET_COUNT);
-                updateDoc(getRoomRef(mpRoomId), {
-                    status: 'spinning',
-                    spinData: { color: selectedColor, amount: betAmount, pocketIndex: pIndex, spinId: Date.now() }
-                });
+                mpChannel.postMessage({ type: 'SPIN', color: selectedColor, amount: betAmount, pocketIndex: pIndex });
                 els.spinBtn.disabled = true;
+                startSpinSequence('player', selectedColor, betAmount, pIndex);
             } else {
                 startSpinSequence('player', selectedColor, betAmount);
             }
@@ -939,7 +890,7 @@
 
         function startSpinSequence(who, color, amount, forcedPocketIndex = null) {
             sound.init(); isSpinning = true; els.spinBtn.disabled = true;
-            els.spinTurnTxt.textContent = who === 'player' ? "Your Spin:" : (isMultiplayer ? "Opponent Spin:" : `${currentNPC.name}'s Spin:`);
+            els.spinTurnTxt.textContent = who === 'player' ? "Your Spin:" : (isMultiplayer ? "Friend Spin:" : `${currentNPC.name}'s Spin:`);
             els.spinBadge.classList.remove('hidden');
 
             const winningIndex = forcedPocketIndex !== null ? forcedPocketIndex : Math.floor(Math.random() * POCKET_COUNT);
@@ -992,39 +943,29 @@
             const isWin = (color === pocket.color);
             const multiplier = (color === 'green') ? 25 : 2;
             let netProfit = isWin ? amount * multiplier : 0;
-            let localPlayerBalance = playerBalance;
-            let localNpcBalance = npcBalance;
 
             if (who === 'player') {
-                if (isWin) localPlayerBalance += netProfit; else localPlayerBalance -= amount;
+                if (isWin) playerBalance += netProfit; else playerBalance -= amount;
                 if(isWin) sound.playWin(color === 'green'); else sound.playLose();
             } else {
-                if (isWin) localNpcBalance += netProfit; else localNpcBalance -= amount;
+                if (isWin) npcBalance += netProfit; else npcBalance -= amount;
                 if(isWin) sound.playLose(); else sound.playWin(true);
-            }
-
-            if(!isMultiplayer) {
-                playerBalance = localPlayerBalance; npcBalance = localNpcBalance;
             }
 
             addHistoryBadge(pocket); updateUI();
             showTurnModal(who, isWin, pocket, amount, netProfit);
 
-            if(isMultiplayer && who === 'player') {
-                getDoc(getRoomRef(mpRoomId)).then(s => {
-                    if(!s.exists()) return;
-                    const d = s.data();
-                    const nxtUid = (d.activeTurn === d.host) ? d.guest : d.host;
-                    let nxtRnd = d.currentRound;
-                    if(nxtUid === d.host) nxtRnd++; 
-                    
-                    updateDoc(getRoomRef(mpRoomId), {
-                        hostBalance: isHost ? localPlayerBalance : localNpcBalance,
-                        guestBalance: isHost ? localNpcBalance : localPlayerBalance,
-                        activeTurn: nxtUid,
-                        currentRound: nxtRnd,
-                        status: 'playing'
-                    });
+            if(isMultiplayer && isHost) {
+                const nextTurnStr = activeTurn === 'player' ? 'guest' : 'host';
+                let nextRnd = currentRound;
+                if(nextTurnStr === 'host') nextRnd++;
+                
+                mpChannel.postMessage({
+                    type: 'SYNC',
+                    hostBal: isHost ? playerBalance : npcBalance,
+                    guestBal: isHost ? npcBalance : playerBalance,
+                    round: nextRnd,
+                    turn: nextTurnStr
                 });
             }
         }
@@ -1045,9 +986,9 @@
                     els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
                     els.turnAmt.textContent = `-$${bet.toLocaleString()}`; els.turnAmt.className = "text-2xl font-black text-red-400";
                 }
-                els.turnModalBtn.textContent = isMultiplayer ? "CONTINUE TO OPPONENT" : `CONTINUE TO ${currentNPC.name.toUpperCase()}`;
+                els.turnModalBtn.textContent = isMultiplayer ? "CONTINUE TO FRIEND" : `CONTINUE TO ${currentNPC.name.toUpperCase()}`;
             } else {
-                const oppName = isMultiplayer ? "OPPONENT" : currentNPC.name.toUpperCase();
+                const oppName = isMultiplayer ? "FRIEND" : currentNPC.name.toUpperCase();
                 if (isWin) {
                     els.turnIcon.className = "w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-xl bg-red-500/20 text-red-400 border border-red-500/50";
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-robot"></i>';
@@ -1075,10 +1016,12 @@
             els.turnModal.querySelector('div').classList.remove('scale-100'); els.turnModal.querySelector('div').classList.add('scale-90');
 
             if (playerBalance <= 0 || npcBalance <= 0) {
-                const loseTxt = isMultiplayer ? "Opponent" : currentNPC.name;
+                const loseTxt = isMultiplayer ? "Friend" : currentNPC.name;
                 const reason = npcBalance <= 0 ? `${loseTxt} Went Bankrupt!` : "You Went Bankrupt!";
-                if(isMultiplayer && isHost) updateDoc(getRoomRef(mpRoomId), { status: 'finished', reason });
-                else if (!isMultiplayer) endMatch(reason);
+                if(isMultiplayer) {
+                    mpChannel.postMessage({ type: 'FINISH', reason });
+                }
+                endMatch(reason);
                 return;
             }
 
@@ -1093,8 +1036,10 @@
                     updateTurnIndicators(); updateUI();
                 }
             } else {
+                activeTurn = activeTurn === 'player' ? 'npc' : 'player';
                 els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-yellow-400'); b.querySelector('.bet-indicator').classList.add('hidden'); });
                 selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
+                updateTurnIndicators(); updateUI();
             }
         });
 
@@ -1107,7 +1052,7 @@
 
             const iconContainer = document.getElementById('gameover-icon-container');
             const title = document.getElementById('gameover-title'); const desc = document.getElementById('gameover-desc');
-            const oppName = isMultiplayer ? "Opponent" : currentNPC.name;
+            const oppName = isMultiplayer ? "Friend" : currentNPC.name;
 
             if (playerWon) {
                 iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center text-3xl shadow-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/50";
@@ -1161,11 +1106,9 @@
             confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         }
 
-        els.restartBtn.addEventListener('click', async () => {
-            if(mpUnsubscribe) mpUnsubscribe();
-            if(isMultiplayer && isHost && mpRoomId && db) {
-                try { await deleteDoc(getRoomRef(mpRoomId)); } catch(e) {}
-            }
+        els.restartBtn.addEventListener('click', () => {
+            if(mpChannel) mpChannel.close();
+            if(mpRoomId) localStorage.removeItem(`room_${mpRoomId}`);
             
             isMultiplayer = false; mpRoomId = null; isHost = false;
 
