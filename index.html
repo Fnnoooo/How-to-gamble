@@ -6,6 +6,7 @@
     <title>Roulette Arena: Multiplayer & Effects</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Outfit:wght@300;400;600;700;900&display=swap');
@@ -130,7 +131,7 @@
         </div>
         <div id="mp-room-display" class="hidden glass-panel px-4 py-2 rounded-xl flex items-center justify-between border border-blue-500/30 col-span-3 sm:col-span-1 bg-blue-900/20">
             <span class="text-xs text-blue-400 uppercase font-bold">Room Code</span>
-            <span id="mp-room-code" class="text-lg font-black text-white tracking-widest">----</span>
+            <span id="mp-room-code" class="text-sm font-black text-white tracking-widest font-mono">----</span>
         </div>
     </div>
 
@@ -322,10 +323,10 @@
             <i class="fa-solid fa-spinner fa-spin text-5xl text-blue-500"></i>
             <div>
                 <h2 class="font-serif-title text-2xl font-black text-white mb-2">WAITING FOR FRIEND</h2>
-                <p class="text-slate-400">Tell them to enter this Room Code to join:</p>
+                <p class="text-slate-400">Give your friend this Room Code to join:</p>
             </div>
             <div class="bg-slate-900 border-2 border-blue-500 px-8 py-4 rounded-2xl">
-                <span id="waiting-room-code" class="text-5xl font-black text-blue-400 tracking-widest font-mono">----</span>
+                <span id="waiting-room-code" class="text-3xl font-black text-blue-400 tracking-widest font-mono">---</span>
             </div>
             <button id="cancel-mp-btn" class="text-slate-500 hover:text-white underline text-sm mt-4">Cancel Room</button>
         </div>
@@ -408,7 +409,7 @@
         </div>
     </div>
 
-    <!-- Main Logic & LocalStorage/BroadcastChannel Multiplayer Engine for GitHub Pages -->
+    <!-- Main Logic & PeerJS Multiplayer Engine -->
     <script>
         // Sound Engine
         class SoundController {
@@ -465,11 +466,11 @@
         const sound = new SoundController();
         let soundEnabled = true;
 
-        // --- Zero-Server BroadcastChannel + LocalStorage Multiplayer Engine for GitHub Pages ---
+        // --- PeerJS Multiplayer Variables ---
+        let peer = null;
+        let conn = null;
         let isMultiplayer = false;
         let isHost = false;
-        let mpRoomId = null;
-        let mpChannel = null;
 
         // Core Game State
         let globalBankroll = 100; 
@@ -699,40 +700,59 @@
             updateTurnIndicators(); updateUI(); startMatchTimer();
         }
 
-        // --- Zero-Server BroadcastChannel Multiplayer Implementation ---
+        // --- PeerJS Multiplayer Implementation ---
         els.createMpBtn.addEventListener('click', () => {
-            const code = Math.random().toString(36).substring(2, 6).toUpperCase();
-            mpRoomId = code; isHost = true;
-            
-            localStorage.setItem(`room_${code}`, JSON.stringify({
-                hostBal: 100, guestBal: 100, rounds: TOTAL_ROUNDS, round: 1, turn: 'host', status: 'waiting'
-            }));
+            const shortCode = 'ROU-' + Math.floor(1000 + Math.random() * 9000);
+            peer = new Peer(shortCode);
 
-            mpChannel = new BroadcastChannel(`roulette_room_${code}`);
-            mpChannel.onmessage = handleMpMessage;
+            peer.on('open', (id) => {
+                isHost = true;
+                els.oppModal.classList.add('hidden');
+                els.waitCode.textContent = id;
+                els.mpWaitModal.classList.remove('hidden');
+            });
 
-            els.oppModal.classList.add('hidden');
-            els.waitCode.textContent = code;
-            els.mpWaitModal.classList.remove('hidden');
+            peer.on('connection', (incomingConn) => {
+                conn = incomingConn;
+                setupConnection();
+                isHost = true;
+                conn.on('open', () => {
+                    conn.send({ type: 'START', rounds: TOTAL_ROUNDS });
+                    startMPGame(TOTAL_ROUNDS);
+                });
+            });
+
+            peer.on('error', (err) => {
+                alert("Room creation error or code already taken. Try again.");
+                console.error(err);
+            });
         });
 
         els.joinMpBtn.addEventListener('click', () => {
             const code = els.joinMpInput.value.trim().toUpperCase();
             if(!code) return;
-            const raw = localStorage.getItem(`room_${code}`);
-            if(!raw) { alert("Room not found!"); return; }
 
-            mpRoomId = code; isHost = false;
-            mpChannel = new BroadcastChannel(`roulette_room_${code}`);
-            mpChannel.onmessage = handleMpMessage;
+            peer = new Peer();
+            peer.on('open', () => {
+                conn = peer.connect(code);
+                setupConnection();
+                isHost = false;
 
-            mpChannel.postMessage({ type: 'JOINED' });
-            startMPGame(JSON.parse(raw).rounds);
+                conn.on('open', () => {
+                    // Connected successfully!
+                });
+
+                conn.on('error', () => {
+                    alert("Room not found or connection failed.");
+                });
+            });
+            peer.on('error', (err) => {
+                alert("Could not connect to room. Check code.");
+            });
         });
 
         els.cancelMpBtn.addEventListener('click', () => {
-            if(mpRoomId) localStorage.removeItem(`room_${mpRoomId}`);
-            if(mpChannel) mpChannel.close();
+            if(peer) peer.destroy();
             els.mpWaitModal.classList.add('hidden');
             els.oppModal.classList.remove('hidden');
         });
@@ -745,7 +765,7 @@
 
             els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> Friend`;
             els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
-            els.mpCodeDisp.textContent = mpRoomId;
+            els.mpCodeDisp.textContent = peer.id;
             els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
             els.mpDisplay.classList.remove('hidden');
 
@@ -753,28 +773,29 @@
             updateTurnIndicators(); updateUI(); startMatchTimer();
         }
 
-        function handleMpMessage(e) {
-            const msg = e.data;
-            if(msg.type === 'JOINED' && isHost) {
-                startMPGame(TOTAL_ROUNDS);
-                mpChannel.postMessage({ type: 'START', rounds: TOTAL_ROUNDS });
-            }
-            if(msg.type === 'START' && !isHost) {
-                startMPGame(msg.rounds);
-            }
-            if(msg.type === 'SPIN') {
-                startSpinSequence(activeTurn === 'player' ? 'npc' : 'player', msg.color, msg.amount, msg.pocketIndex);
-            }
-            if(msg.type === 'SYNC') {
-                playerBalance = isHost ? msg.hostBal : msg.guestBal;
-                npcBalance = isHost ? msg.guestBal : msg.hostBal;
-                currentRound = msg.round;
-                activeTurn = msg.turn === (isHost ? 'host' : 'guest') ? 'player' : 'npc';
-                updateUI(); updateTurnIndicators();
-            }
-            if(msg.type === 'FINISH') {
-                endMatch(msg.reason);
-            }
+        function setupConnection() {
+            conn.on('data', (data) => {
+                if(data.type === 'START') {
+                    startMPGame(data.rounds);
+                }
+                if(data.type === 'SPIN') {
+                    startSpinSequence(activeTurn === 'player' ? 'npc' : 'player', data.color, data.amount, data.pocketIndex);
+                }
+                if(data.type === 'SYNC') {
+                    playerBalance = isHost ? data.hostBal : data.guestBal;
+                    npcBalance = isHost ? data.guestBal : data.hostBal;
+                    currentRound = data.round;
+                    activeTurn = data.turn === (isHost ? 'host' : 'guest') ? 'player' : 'npc';
+                    updateUI(); updateTurnIndicators();
+                }
+                if(data.type === 'FINISH') {
+                    endMatch(data.reason);
+                }
+            });
+
+            conn.on('close', () => {
+                if(matchActive) endMatch("Opponent disconnected.");
+            });
         }
 
         // --- Game Sync Logic ---
@@ -787,8 +808,8 @@
                 const secs = (matchTimerSeconds % 60).toString().padStart(2, '0');
                 els.mTimer.textContent = `${mins}:${secs}`;
                 if (matchTimerSeconds <= 0 && (!isMultiplayer || (isMultiplayer && isHost))) {
-                    if(isMultiplayer) {
-                        mpChannel.postMessage({ type: 'FINISH', reason: "Time's Up!" });
+                    if(isMultiplayer && conn) {
+                        conn.send({ type: 'FINISH', reason: "Time's Up!" });
                         endMatch("Time's Up!");
                     } else endMatch("Time's Up!");
                 }
@@ -870,9 +891,9 @@
         els.spinBtn.addEventListener('click', () => {
             if (isSpinning || activeTurn !== 'player' || !selectedColor || betAmount > playerBalance) return;
             
-            if(isMultiplayer) {
+            if(isMultiplayer && conn) {
                 const pIndex = Math.floor(Math.random() * POCKET_COUNT);
-                mpChannel.postMessage({ type: 'SPIN', color: selectedColor, amount: betAmount, pocketIndex: pIndex });
+                conn.send({ type: 'SPIN', color: selectedColor, amount: betAmount, pocketIndex: pIndex });
                 els.spinBtn.disabled = true;
                 startSpinSequence('player', selectedColor, betAmount, pIndex);
             } else {
@@ -955,12 +976,12 @@
             addHistoryBadge(pocket); updateUI();
             showTurnModal(who, isWin, pocket, amount, netProfit);
 
-            if(isMultiplayer && isHost) {
+            if(isMultiplayer && isHost && conn) {
                 const nextTurnStr = activeTurn === 'player' ? 'guest' : 'host';
                 let nextRnd = currentRound;
                 if(nextTurnStr === 'host') nextRnd++;
                 
-                mpChannel.postMessage({
+                conn.send({
                     type: 'SYNC',
                     hostBal: isHost ? playerBalance : npcBalance,
                     guestBal: isHost ? npcBalance : playerBalance,
@@ -1018,8 +1039,8 @@
             if (playerBalance <= 0 || npcBalance <= 0) {
                 const loseTxt = isMultiplayer ? "Friend" : currentNPC.name;
                 const reason = npcBalance <= 0 ? `${loseTxt} Went Bankrupt!` : "You Went Bankrupt!";
-                if(isMultiplayer) {
-                    mpChannel.postMessage({ type: 'FINISH', reason });
+                if(isMultiplayer && conn) {
+                    conn.send({ type: 'FINISH', reason });
                 }
                 endMatch(reason);
                 return;
@@ -1107,10 +1128,8 @@
         }
 
         els.restartBtn.addEventListener('click', () => {
-            if(mpChannel) mpChannel.close();
-            if(mpRoomId) localStorage.removeItem(`room_${mpRoomId}`);
-            
-            isMultiplayer = false; mpRoomId = null; isHost = false;
+            if(peer) peer.destroy();
+            isMultiplayer = false; peer = null; conn = null; isHost = false;
 
             els.goModal.classList.add('opacity-0', 'pointer-events-none');
             els.goModal.querySelector('div').classList.remove('scale-100'); els.goModal.querySelector('div').classList.add('scale-90');
