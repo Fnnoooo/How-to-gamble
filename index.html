@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIP Roulette Arena: Multiplayer & Ruby AI</title>
+    <title>VIP Roulette Arena: v1.01</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -47,7 +47,7 @@
             text-shadow: 0px 4px 10px rgba(0,0,0,0.8);
         }
 
-        /* Knockout Effect Animations */
+        /* Knockout Effects */
         .lightning-strike-anim { animation: strike-sequence 1s ease-in-out infinite; }
         @keyframes strike-sequence {
             0% { opacity: 0; }
@@ -81,6 +81,7 @@
             100% { transform: scale(0) rotate(1080deg); opacity: 0; }
         }
 
+        /* Chips */
         .chip {
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.8), inset 0 0 0 3px rgba(0, 0, 0, 0.4), inset 0 0 0 5px rgba(255, 255, 255, 0.4);
             border: 2px dashed rgba(255, 255, 255, 0.3);
@@ -115,6 +116,21 @@
     </style>
 </head>
 <body class="flex flex-col min-h-screen justify-between items-center p-2 sm:p-4 overflow-x-hidden">
+
+    <!-- Version Tag -->
+    <div class="fixed bottom-2 right-2 text-gray-500 font-bold text-[10px] sm:text-xs z-[40] bg-black/50 px-2 py-1 rounded-lg">
+        Version 1.01V
+    </div>
+
+    <!-- Fullscreen Loading Transition -->
+    <div id="scene-transition" class="fixed inset-0 bg-[#050505] z-[150] flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500">
+        <div class="relative w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center">
+            <div class="absolute inset-0 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin"></div>
+            <div class="absolute inset-2 border-4 border-amber-600 border-b-transparent rounded-full animate-[spin_1.5s_reverse_infinite]"></div>
+            <i class="fa-solid fa-crown text-4xl sm:text-5xl text-[#d4af37] drop-shadow-[0_0_15px_rgba(212,175,55,0.8)] animate-pulse"></i>
+        </div>
+        <h2 class="font-serif-title text-[#d4af37] text-xl mt-6 tracking-[0.2em] animate-pulse drop-shadow-md">LOADING...</h2>
+    </div>
 
     <!-- Premium Header -->
     <header class="w-full max-w-5xl glass-panel rounded-2xl p-3 sm:p-4 mb-3 sm:mb-4 flex flex-wrap justify-between items-center gap-3">
@@ -245,7 +261,7 @@
             </div>
 
             <!-- Ruby AI Button (Dynamically shown) -->
-            <button id="open-ruby-btn" class="hidden w-full py-2.5 bg-gradient-to-r from-rose-700 to-pink-900 hover:from-rose-600 hover:to-pink-800 border border-pink-400/50 rounded-xl text-white font-black tracking-widest text-xs sm:text-sm shadow-[0_0_15px_rgba(244,63,94,0.4)] transition">
+            <button id="open-ruby-btn" class="hidden w-full py-2.5 sm:py-3 bg-gradient-to-r from-rose-700 to-pink-900 hover:from-rose-600 hover:to-pink-800 border border-pink-400/50 rounded-xl text-white font-black tracking-widest text-xs sm:text-sm shadow-[0_0_15px_rgba(244,63,94,0.4)] transition">
                 <i class="fa-solid fa-heart mr-2 text-pink-300"></i> ASK RUBY 💋
             </button>
 
@@ -414,6 +430,13 @@
                     <div class="flex-1">
                         <div class="flex justify-between items-center"><h3 class="font-bold text-xs sm:text-base text-white group-hover:text-[#d4af37]">The Grandmaster</h3><span class="text-[8px] sm:text-[10px] font-black bg-yellow-900/80 text-[#d4af37] px-2 sm:px-3 py-0.5 sm:py-1 rounded border border-[#d4af37]/50">MASTER</span></div>
                         <p class="text-[9px] sm:text-xs text-gray-400 mt-0.5">The ultimate boss. Unforgiving strategy.</p>
+                    </div>
+                </button>
+                <button data-npc="8" class="npc-select-btn p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border-2 border-yellow-300 bg-yellow-900/30 hover:border-[#fff7d6] hover:bg-yellow-900/50 transition flex items-center gap-3 sm:gap-4 group shadow-[0_0_20px_rgba(253,224,71,0.2)]">
+                    <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-yellow-100 border-2 border-yellow-400 flex items-center justify-center text-lg sm:text-2xl shadow-[0_0_15px_rgba(250,204,21,0.8)]">👁️</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center"><h3 class="font-black text-xs sm:text-base text-yellow-100 group-hover:text-white drop-shadow-md">God</h3><span class="text-[8px] sm:text-[10px] font-black bg-white text-yellow-600 px-2 sm:px-3 py-0.5 sm:py-1 rounded border border-yellow-400 shadow-[0_0_10px_rgba(255,255,255,0.5)]">OMNIPOTENT</span></div>
+                        <p class="text-[9px] sm:text-xs text-yellow-200/80 mt-0.5">He sees all. He never loses.</p>
                     </div>
                 </button>
             </div>
@@ -638,12 +661,12 @@
         let matchTimerSeconds = 180;
         let timerInterval = null;
         let matchActive = false;
-        let isModalProcessing = false; // Safelock for double-clicks
+        let isModalProcessing = false; 
 
         let effects = { lightning: { owned: false }, blackhole: { owned: false }, ruby: { owned: false } };
         let activeEffect = null; 
 
-        // Expanded 8 NPC Roster
+        // Expanded NPC Roster including "God"
         const NPC_LIST = [
             { name: "Rookie Rick", icon: "👦", risk: "low", greenProbability: 0.05 },
             { name: "Cautious Carl", icon: "👴", risk: "low", greenProbability: 0.01 },
@@ -652,7 +675,8 @@
             { name: "Risk-Taker Ruby", icon: "💃", risk: "high", greenProbability: 0.25 },
             { name: "Lucky Luke", icon: "🍀", risk: "high", greenProbability: 0.30 },
             { name: "The Phantom", icon: "👻", risk: "smart", greenProbability: 0.20 },
-            { name: "The Grandmaster", icon: "👑", risk: "smart", greenProbability: 0.25 }
+            { name: "The Grandmaster", icon: "👑", risk: "smart", greenProbability: 0.25 },
+            { name: "God", icon: "👁️", risk: "godmode", greenProbability: 0.10 } // Omnipotent
         ];
         let currentNPC = NPC_LIST[0];
 
@@ -701,10 +725,8 @@
             ctx.save(); 
             ctx.translate(centerX, centerY);
 
-            ctx.shadowColor = 'rgba(0,0,0,0.8)';
-            ctx.shadowBlur = 15;
-            ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.beginPath(); ctx.arc(4, 6, radius, 0, Math.PI * 2); ctx.fill();
 
             const rimGrad = ctx.createLinearGradient(-radius, -radius, radius, radius);
             rimGrad.addColorStop(0, '#333'); rimGrad.addColorStop(0.3, '#aaa'); rimGrad.addColorStop(0.5, '#555'); rimGrad.addColorStop(1, '#111');
@@ -736,18 +758,20 @@
                 ctx.lineTo(Math.cos(startAngle)*innerRadius, Math.sin(startAngle)*innerRadius);
                 ctx.lineWidth = 1.5; ctx.strokeStyle = '#d4af37'; ctx.stroke();
                 
+                ctx.beginPath(); ctx.moveTo(0, 0); 
+                ctx.lineTo(Math.cos(startAngle)*innerRadius, Math.sin(startAngle)*innerRadius);
+                ctx.lineWidth = 0.5; ctx.strokeStyle = '#78350f'; ctx.stroke();
+
                 ctx.save(); ctx.rotate(startAngle + arcSize / 2);
                 ctx.textAlign = 'right'; ctx.fillStyle = '#ffffff'; 
-                ctx.shadowColor = '#000'; ctx.shadowBlur = 3;
                 ctx.font = 'bold 12px Outfit, sans-serif';
                 ctx.fillText(RAW_WHEEL_SEQUENCE[i].num, innerRadius - 8, 4); 
                 ctx.restore();
             }
 
             const turretBase = radius * 0.55;
-            ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 10;
-            ctx.beginPath(); ctx.arc(0, 0, turretBase, 0, 2 * Math.PI); ctx.fillStyle = '#0f172a'; ctx.fill();
-            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.beginPath(); ctx.arc(3, 4, turretBase, 0, 2 * Math.PI); ctx.fill();
 
             const tGrad1 = ctx.createLinearGradient(-turretBase, -turretBase, turretBase, turretBase);
             tGrad1.addColorStop(0, '#fef08a'); tGrad1.addColorStop(0.5, '#b45309'); tGrad1.addColorStop(1, '#78350f');
@@ -766,10 +790,8 @@
             const ballX = Math.cos(ballRad) * ballRadius;
             const ballY = Math.sin(ballRad) * ballRadius;
 
-            ctx.shadowColor = 'rgba(0,0,0,0.8)';
-            ctx.shadowBlur = 6;
-            ctx.shadowOffsetX = Math.cos(ballRad) * -3;
-            ctx.shadowOffsetY = Math.sin(ballRad) * -3;
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.beginPath(); ctx.arc(ballX + Math.cos(ballRad)*-2, ballY + Math.sin(ballRad)*-2, 6.5, 0, 2 * Math.PI); ctx.fill();
             
             ctx.beginPath(); ctx.arc(ballX, ballY, 6, 0, 2 * Math.PI); 
             const ballGrad = ctx.createRadialGradient(ballX - 2, ballY - 2, 1, ballX, ballY, 6);
@@ -779,7 +801,6 @@
             ctx.fillStyle = ballGrad; 
             ctx.fill();
             
-            ctx.shadowColor = 'transparent'; 
             ctx.restore();
         }
         
@@ -848,10 +869,10 @@
             goModal: document.getElementById('gameover-modal')
         };
 
-        // --- Custom Error Toast Notification ---
+        // --- Custom Drop-down Notification ---
         function showNotification(msg) {
             const toast = document.createElement('div');
-            toast.className = "fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-2xl z-[100] border-2 border-red-400 transition-all duration-300 opacity-0 translate-y-[-20px]";
+            toast.className = "fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-2xl z-[200] border-2 border-red-400 transition-all duration-300 opacity-0 translate-y-[-20px]";
             toast.textContent = msg;
             document.body.appendChild(toast);
             
@@ -860,6 +881,18 @@
                 toast.classList.add('opacity-0', 'translate-y-[-20px]'); 
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
+        }
+
+        // --- Loading Transition Logic ---
+        async function runTransition(actionCallback) {
+            const trans = document.getElementById('scene-transition');
+            trans.classList.remove('opacity-0', 'pointer-events-none');
+            await new Promise(r => setTimeout(r, 600)); 
+            
+            actionCallback();
+            
+            await new Promise(r => setTimeout(r, 800)); 
+            trans.classList.add('opacity-0', 'pointer-events-none'); 
         }
 
         // --- Shop Logic ---
@@ -918,10 +951,12 @@
             const isSpicy = els.rubySpicyToggle.checked;
             const spicyAddon = isSpicy ? "SPICY MODE ENABLED: Be overwhelmingly impressed by the user, very dramatic, and extra playfully flirty (but strictly PG-13). " : "";
             
-            const promptText = `System: You are Ruby, a playfully flirty, confident, and glamorous high-roller casino AI assistant. ${spicyAddon}You help the user decide what to bet on in Roulette (Red, Black, or Green). Analyze the recent spins context if provided, but keep your advice fun, slightly cheeky, and charismatic. Keep your response to 2 short sentences.\n\nGame context: Recent roulette spins were [${recentSpins}]. User says: "${userText}"`;
+            const systemPrompt = `You are Ruby, a playfully flirty, confident, and glamorous high-roller casino AI assistant. ${spicyAddon}You help the user decide what to bet on in Roulette (Red, Black, or Green). Analyze the recent spins context if provided, but keep your advice fun, slightly cheeky, and charismatic. Keep your response to 2 short sentences.`;
+            const userQuery = `Game context: Recent roulette spins were [${recentSpins}]. User says: "${userText}"`;
 
             const payload = {
-                contents: [{ role: 'user', parts: [{ text: promptText }] }]
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
             };
 
             try {
@@ -930,9 +965,11 @@
                 if(data.candidates && data.candidates[0] && data.candidates[0].content) {
                     return data.candidates[0].content.parts[0].text;
                 } else {
+                    console.error("Ruby API Error Structure:", data);
                     return "Hmm, I couldn't quite catch that sugar. Try asking again. 😘";
                 }
             } catch (e) {
+                console.error("Ruby Fetch Error:", e);
                 return "Having trouble connecting right now, darling. Maybe just follow your heart? 😘";
             }
         }
@@ -942,11 +979,11 @@
             div.className = "flex flex-col items-" + (who === 'user' ? 'end' : 'start') + " gap-1 chat-bubble";
             
             const nameSpan = document.createElement('span');
-            nameSpan.className = `text-[10px] font-bold mx-1 ${who === 'user' ? 'text-gray-400' : 'text-pink-500'}`;
+            nameSpan.className = `text-[10px] font-bold ml-1 ${who === 'user' ? 'text-gray-400 mr-1' : 'text-pink-500'}`;
             nameSpan.textContent = who === 'user' ? 'You' : 'Ruby';
             
             const bubble = document.createElement('div');
-            bubble.className = `text-xs sm:text-sm px-3 py-2 rounded-2xl shadow-sm ${who === 'user' ? 'bg-gray-800 text-gray-200 rounded-tr-none' : 'bg-rose-900/60 border border-pink-500/30 text-rose-100 rounded-tl-none'}`;
+            bubble.className = `text-xs sm:text-sm px-3 py-2 shadow-sm ${who === 'user' ? 'bg-gray-800 text-gray-200 rounded-2xl rounded-tr-none' : 'bg-rose-900/60 border border-pink-500/30 text-rose-100 rounded-2xl rounded-tl-none'}`;
             bubble.textContent = text;
 
             div.appendChild(nameSpan); div.appendChild(bubble);
@@ -989,7 +1026,7 @@
         els.npcSelects.forEach(btn => {
             btn.addEventListener('click', () => {
                 const idx = parseInt(btn.getAttribute('data-npc'), 10);
-                startSPMatch(NPC_LIST[idx]);
+                runTransition(() => startSPMatch(NPC_LIST[idx]));
             });
         });
 
@@ -1123,33 +1160,35 @@
         });
 
         function startMPGame(rounds, time) {
-            els.oppModal.classList.add('hidden');
-            els.mpWaitModal.classList.add('hidden');
-            els.joinMpBtn.textContent = "Join";
-            
-            isMultiplayer = true; matchActive = true;
-            TOTAL_ROUNDS = rounds; matchTimerSeconds = time || 180;
-            
-            playerBalance = 100;
-            npcBalance = 100;
-            currentRound = 1;
+            runTransition(() => {
+                els.oppModal.classList.add('hidden');
+                els.mpWaitModal.classList.add('hidden');
+                els.joinMpBtn.textContent = "Join";
+                
+                isMultiplayer = true; matchActive = true;
+                TOTAL_ROUNDS = rounds; matchTimerSeconds = time || 180;
+                
+                playerBalance = 100;
+                npcBalance = 100;
+                currentRound = 1;
 
-            resetBoard();
+                resetBoard();
 
-            els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> Friend`;
-            els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
-            els.pBetTag.textContent = "No Bet";
-            els.nBetTag.textContent = "No Bet";
-            
-            els.mpCodeDisp.textContent = isHost ? peer.id : conn.peer;
-            els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
-            els.mpDisplay.classList.remove('hidden');
+                els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> Friend`;
+                els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
+                els.pBetTag.textContent = "No Bet";
+                els.nBetTag.textContent = "No Bet";
+                
+                els.mpCodeDisp.textContent = isHost ? peer.id : conn.peer;
+                els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
+                els.mpDisplay.classList.remove('hidden');
 
-            activeTurn = isHost ? 'player' : 'npc';
-            
-            sound.playMusic();
-            updateTurnIndicators(); updateUI(); startMatchTimer();
-            setTimeout(resizeCanvas, 100);
+                activeTurn = isHost ? 'player' : 'npc';
+                
+                sound.playMusic();
+                updateTurnIndicators(); updateUI(); startMatchTimer();
+                setTimeout(resizeCanvas, 100);
+            });
         }
 
         function setupConnection() {
@@ -1224,15 +1263,16 @@
 
         function generateNPCBet() {
             if (npcBalance <= 0) return { color: null, amount: 0 };
-            const color = Math.random() < currentNPC.greenProbability ? 'green' : (Math.random() > 0.5 ? 'red' : 'black');
+            
+            let amount = 10;
             const validChips = [10, 25, 50, 100, npcBalance].filter(c => c <= npcBalance);
             if(validChips.length === 0) validChips.push(npcBalance);
 
-            let amount = 10;
-            if (currentNPC.risk === 'low') amount = validChips[0];
+            if (currentNPC.risk === 'low' || currentNPC.risk === 'godmode') amount = validChips[0];
             else if (currentNPC.risk === 'high') amount = validChips[validChips.length - 1 <= 100 ? validChips.length - 1 : validChips.length - 2] || npcBalance;
             else amount = Math.random() > 0.5 ? validChips[Math.floor(validChips.length/2)] : validChips[0];
             
+            const color = Math.random() < currentNPC.greenProbability ? 'green' : (Math.random() > 0.5 ? 'red' : 'black');
             return { color, amount };
         }
 
@@ -1304,13 +1344,29 @@
             els.spinTurnTxt.textContent = who === 'player' ? "Your Spin:" : (isMultiplayer ? "Friend's Spin:" : `${currentNPC.name}'s Spin:`);
             els.spinBadge.classList.remove('hidden');
 
-            const winningIndex = forcedPocketIndex !== null ? forcedPocketIndex : Math.floor(Math.random() * POCKET_COUNT);
-            const winningPocket = RAW_WHEEL_SEQUENCE[winningIndex];
+            let finalPocketIndex = forcedPocketIndex;
+            
+            // God Mode Omnipotence Override
+            if (!isMultiplayer && currentNPC.name === "God" && forcedPocketIndex === null) {
+                if (who === 'npc') {
+                    const matching = RAW_WHEEL_SEQUENCE.map((p, i) => ({p, i})).filter(x => x.p.color === color);
+                    finalPocketIndex = matching[Math.floor(Math.random() * matching.length)].i;
+                } else if (who === 'player') {
+                    const losing = RAW_WHEEL_SEQUENCE.map((p, i) => ({p, i})).filter(x => x.p.color !== color);
+                    finalPocketIndex = losing[Math.floor(Math.random() * losing.length)].i;
+                }
+            }
+
+            if (finalPocketIndex === null) {
+                finalPocketIndex = Math.floor(Math.random() * POCKET_COUNT);
+            }
+            
+            const winningPocket = RAW_WHEEL_SEQUENCE[finalPocketIndex];
 
             const SPIN_DURATION = 5000; const startTime = performance.now(); const arcSize = (2 * Math.PI) / POCKET_COUNT;
             
             const currentMod = wheelRotation % (2 * Math.PI);
-            const targetMod = -(winningIndex * arcSize); 
+            const targetMod = -(finalPocketIndex * arcSize); 
             let rotationNeeded = targetMod - currentMod;
             while (rotationNeeded <= 0) rotationNeeded += 2 * Math.PI;
             const targetWheelRotation = wheelRotation + rotationNeeded + Math.PI * 2 * 5;
@@ -1350,13 +1406,12 @@
             requestAnimationFrame(animateSpin);
         }
 
-        // PERFECT LOCAL MEMORY RESOLUTION - FIXES MONEY BUG
+        // PERFECT LOCAL MEMORY RESOLUTION - FIXES MONEY DOUBLE DEDUCTION BUG
         function resolveTurn(who, color, amount, pocket) {
             const isWin = (color === pocket.color);
             const multiplier = (color === 'green') ? 25 : 2;
             let netProfit = isWin ? amount * multiplier : 0;
 
-            // Apply to local memory if Single Player, OR if Authoritative Host
             if(!isMultiplayer || isHost) {
                 if (who === 'player') {
                     playerBalance += (netProfit - amount);
@@ -1375,7 +1430,6 @@
 
             showTurnModal(who, isWin, pocket, amount, netProfit);
 
-            // Host syncs state to guest seamlessly
             if(isMultiplayer && isHost && conn) {
                 const nextTurnStr = activeTurn === 'player' ? 'guest' : 'host';
                 let nextRnd = currentRound;
@@ -1431,9 +1485,6 @@
             els.turnModal.classList.remove('opacity-0', 'pointer-events-none');
             els.turnModal.querySelector('div').classList.remove('scale-90'); els.turnModal.querySelector('div').classList.add('scale-100');
         }
-
-        els.turnIcon = document.getElementById('turn-icon-container'); els.turnTitle = document.getElementById('turn-title');
-        els.turnDesc = document.getElementById('turn-desc'); els.turnAmt = document.getElementById('turn-amount');
 
         els.turnModalBtn.addEventListener('click', () => {
             if (isModalProcessing) return; 
@@ -1543,16 +1594,18 @@
         }
 
         els.restartBtn.addEventListener('click', () => {
-            if(peer) peer.destroy();
-            isMultiplayer = false; peer = null; conn = null; isHost = false;
+            runTransition(() => {
+                if(peer) peer.destroy();
+                isMultiplayer = false; peer = null; conn = null; isHost = false;
 
-            els.goModal.classList.add('opacity-0', 'pointer-events-none');
-            els.goModal.querySelector('div').classList.remove('scale-100'); els.goModal.querySelector('div').classList.add('scale-90');
-            els.statsBar.classList.add('hidden'); els.arenaBar.classList.add('hidden');
-            
-            resetBoard();
-            els.oppModal.classList.remove('hidden');
-            els.mpDisplay.classList.add('hidden');
+                els.goModal.classList.add('opacity-0', 'pointer-events-none');
+                els.goModal.querySelector('div').classList.remove('scale-100'); els.goModal.querySelector('div').classList.add('scale-90');
+                els.statsBar.classList.add('hidden'); els.arenaBar.classList.add('hidden');
+                
+                resetBoard();
+                els.oppModal.classList.remove('hidden');
+                els.mpDisplay.classList.add('hidden');
+            });
         });
 
         function addHistoryBadge(pocket) {
