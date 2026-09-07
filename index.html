@@ -3,40 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Arena: Luxury Edition</title>
+    <title>VIP Roulette Arena: Multiplayer & Effects</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Outfit:wght@300;400;600;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Playfair+Display:wght@400;700;900&display=swap');
 
         body {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at top, #1e293b 0%, #020617 100%);
+            /* Premium Casino Felt Background */
+            font-family: 'Playfair Display', serif;
+            background-color: #0b2e13;
+            background-image: radial-gradient(circle at center, #145324 0%, #061709 100%);
             color: #f8fafc;
             min-height: 100vh;
             user-select: none;
             -webkit-user-select: none;
             touch-action: manipulation;
+            background-attachment: fixed;
         }
 
-        .font-serif-title { font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
+        .font-serif-title { font-family: 'Cinzel', serif; letter-spacing: 0.08em; }
 
-        /* Luxury Glassmorphism */
+        /* Ultra Luxury Glassmorphism & Gold */
         .glass-panel {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(245, 158, 11, 0.25);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.85) 0%, rgba(20, 20, 20, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), inset 0 2px 15px rgba(212, 175, 55, 0.15);
         }
 
-        .gold-border { border: 1px solid rgba(245, 158, 11, 0.4); }
+        .gold-border { border: 2px solid rgba(212, 175, 55, 0.6); }
 
         .gold-gradient-text {
-            background: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #b45309 100%);
+            background: linear-gradient(to bottom, #fff7d6 0%, #d4af37 40%, #aa7700 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-shadow: 0px 4px 10px rgba(0,0,0,0.8);
         }
 
         /* Knockout Effect Animations */
@@ -73,91 +77,95 @@
             100% { transform: scale(0) rotate(1080deg); opacity: 0; }
         }
 
+        /* Realistic Casino Chips */
         .chip {
-            box-shadow: 0 6px 10px -2px rgba(0, 0, 0, 0.6), inset 0 0 0 4px rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.8), inset 0 0 0 4px rgba(0, 0, 0, 0.4), inset 0 0 0 6px rgba(255, 255, 255, 0.6);
+            border: 3px dashed rgba(255, 255, 255, 0.4);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
-        .chip:hover { transform: translateY(-3px) scale(1.05); }
+        .chip:hover { transform: translateY(-4px) scale(1.08); box-shadow: 0 12px 15px rgba(0,0,0,0.9), inset 0 0 0 4px rgba(0,0,0,0.4), inset 0 0 0 6px rgba(255,255,255,0.7); }
         .chip:active { transform: translateY(0) scale(0.95); }
         .chip-selected {
-            ring: 4px solid #f59e0b; transform: translateY(-5px);
-            box-shadow: 0 12px 20px -3px rgba(245, 158, 11, 0.5), inset 0 0 0 4px rgba(255, 255, 255, 0.3);
+            border-color: #ffd700;
+            box-shadow: 0 15px 25px -3px rgba(212, 175, 55, 0.8), inset 0 0 0 4px rgba(0,0,0,0.4), inset 0 0 0 6px #ffd700;
+            transform: translateY(-8px);
         }
 
         @keyframes pulse-green {
-            0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
-            50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.8); }
+            0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); border-color: rgba(16, 185, 129, 0.6); }
+            50% { box-shadow: 0 0 40px rgba(16, 185, 129, 1); border-color: rgba(16, 185, 129, 1); }
         }
         .glow-green { animation: pulse-green 2s infinite; }
 
-        .active-turn-ring { box-shadow: 0 0 25px rgba(245, 158, 11, 0.4); border-color: rgba(245, 158, 11, 0.8) !important; }
+        .active-turn-ring { box-shadow: 0 0 35px rgba(212, 175, 55, 0.5); border-color: #d4af37 !important; }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
-        ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.4); border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.7); border-radius: 4px; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen justify-between items-center p-2 sm:p-4 overflow-x-hidden">
 
     <!-- Premium Header -->
-    <header class="w-full max-w-5xl glass-panel rounded-2xl p-4 mb-4 flex flex-wrap justify-between items-center gap-3 gold-border">
+    <header class="w-full max-w-5xl glass-panel rounded-2xl p-4 mb-4 flex flex-wrap justify-between items-center gap-3">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-yellow-700 via-yellow-400 to-amber-200 flex items-center justify-center text-slate-900 font-black shadow-[0_0_15px_rgba(245,158,11,0.5)] border-2 border-yellow-200">
-                <i class="fa-solid fa-crown text-xl"></i>
+            <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-[#8b6914] via-[#d4af37] to-[#f9f295] flex items-center justify-center text-black font-black shadow-[0_0_20px_rgba(212,175,55,0.6)] border-2 border-[#fff7d6]">
+                <i class="fa-solid fa-crown text-2xl"></i>
             </div>
             <div>
-                <h1 class="font-serif-title text-xl sm:text-3xl font-black gold-gradient-text">ROULETTE BATTLES</h1>
-                <p class="text-xs sm:text-sm text-slate-300 font-semibold tracking-wide">Global Bankroll: <span id="global-bankroll" class="text-emerald-400 font-black">$100</span></p>
+                <h1 class="font-serif-title text-2xl sm:text-4xl font-black gold-gradient-text drop-shadow-xl">ROULETTE BATTLES</h1>
+                <p class="text-sm sm:text-base text-gray-300 font-bold tracking-wide">Global Bankroll: <span id="global-bankroll" class="text-[#d4af37] drop-shadow-md font-black">$100</span></p>
             </div>
         </div>
 
         <div class="flex items-center gap-3">
-            <button id="open-shop-btn" class="px-5 py-2.5 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-600 hover:to-indigo-700 rounded-xl text-white font-bold text-xs sm:text-sm border border-blue-400/50 shadow-[0_0_15px_rgba(59,130,246,0.3)] transition flex items-center gap-2">
-                <i class="fa-solid fa-store"></i> SHOP
+            <button id="open-shop-btn" class="px-5 py-3 bg-gradient-to-r from-blue-800 to-indigo-900 hover:from-blue-700 hover:to-indigo-800 rounded-xl text-white font-bold text-sm sm:text-base border border-blue-400/50 shadow-[0_0_20px_rgba(59,130,246,0.5)] transition flex items-center gap-2">
+                <i class="fa-solid fa-store"></i> EFFECTS SHOP
             </button>
-            <button id="sound-toggle" class="p-3 bg-slate-800/80 hover:bg-slate-700 rounded-xl text-yellow-500 border border-slate-600 transition shadow-md" title="Toggle Sound">
-                <i id="sound-icon" class="fa-solid fa-volume-high text-base"></i>
+            <button id="sound-toggle" class="p-3.5 bg-black/60 hover:bg-black/90 rounded-xl text-[#d4af37] border border-[#d4af37]/50 transition shadow-lg" title="Toggle Sound">
+                <i id="sound-icon" class="fa-solid fa-volume-high text-lg"></i>
             </button>
         </div>
     </header>
 
     <!-- Timer & Round Bar -->
     <div id="game-stats-bar" class="w-full max-w-5xl mb-4 hidden grid grid-cols-3 gap-3 sm:gap-4">
-        <div class="glass-panel px-5 py-3 rounded-xl flex items-center justify-between border border-yellow-500/30 shadow-md">
-            <span class="text-xs text-yellow-500 uppercase font-extrabold tracking-wider">Match Time</span>
-            <span id="match-timer" class="text-xl font-black text-amber-400 font-mono drop-shadow-md">03:00</span>
+        <div class="glass-panel px-5 py-3 rounded-xl flex items-center justify-between shadow-xl">
+            <span class="text-xs text-[#d4af37] uppercase font-black tracking-widest">Match Time</span>
+            <span id="match-timer" class="text-2xl font-black text-white font-mono drop-shadow-lg">03:00</span>
         </div>
-        <div class="glass-panel px-5 py-3 rounded-xl flex items-center justify-between border border-yellow-500/30 col-span-2 sm:col-span-1 shadow-md">
-            <span class="text-xs text-yellow-500 uppercase font-extrabold tracking-wider">Round</span>
-            <span id="round-display" class="text-xl font-black text-slate-100 drop-shadow-md">1 / 10</span>
+        <div class="glass-panel px-5 py-3 rounded-xl flex items-center justify-between col-span-2 sm:col-span-1 shadow-xl">
+            <span class="text-xs text-[#d4af37] uppercase font-black tracking-widest">Round</span>
+            <span id="round-display" class="text-2xl font-black text-white drop-shadow-lg">1 / 10</span>
         </div>
-        <div id="mp-room-display" class="hidden glass-panel px-5 py-3 rounded-xl flex items-center justify-between border border-blue-400/40 col-span-3 sm:col-span-1 bg-blue-900/30 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
-            <span class="text-xs text-blue-400 uppercase font-extrabold tracking-wider">Room Code</span>
-            <span id="mp-room-code" class="text-base sm:text-lg font-black text-white tracking-widest font-mono drop-shadow-md">----</span>
+        <div id="mp-room-display" class="hidden glass-panel px-5 py-3 rounded-xl flex items-center justify-between border-blue-500/50 col-span-3 sm:col-span-1 bg-blue-950/40 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+            <span class="text-xs text-blue-400 uppercase font-black tracking-widest">Room Code</span>
+            <span id="mp-room-code" class="text-xl font-black text-white tracking-widest font-mono drop-shadow-lg">----</span>
         </div>
     </div>
 
     <!-- VS Battle Arena Bar -->
     <section id="vs-arena-bar" class="w-full max-w-5xl mb-6 hidden grid grid-cols-2 gap-4 sm:gap-8">
         <div id="player-card" class="glass-panel p-4 sm:p-5 rounded-2xl border-l-4 border-l-blue-500 flex flex-col justify-between transition-all duration-300">
-            <div class="flex justify-between items-center mb-2">
-                <span id="player-name-tag" class="text-sm uppercase font-black text-blue-400 flex items-center gap-2"><i class="fa-solid fa-user"></i> You</span>
-                <span id="player-status" class="text-[10px] bg-emerald-900 text-emerald-300 border border-emerald-500/50 px-2.5 py-1 rounded font-black uppercase animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.2)]">YOUR TURN</span>
+            <div class="flex justify-between items-center mb-3">
+                <span id="player-name-tag" class="text-sm sm:text-base uppercase font-black text-blue-400 flex items-center gap-2 drop-shadow-md"><i class="fa-solid fa-user"></i> You</span>
+                <span id="player-status" class="text-xs bg-[#0b2e13] text-[#d4af37] border border-[#d4af37]/60 px-3 py-1 rounded font-black uppercase animate-pulse shadow-[0_0_15px_rgba(212,175,55,0.4)]">YOUR TURN</span>
             </div>
             <div class="flex justify-between items-end">
-                <span id="player-balance" class="text-2xl sm:text-4xl font-black text-emerald-400 transition-all drop-shadow-md">$100</span>
-                <span id="player-bet-tag" class="text-xs bg-slate-900/90 border border-slate-600 px-3 py-1.5 rounded-lg text-slate-200 font-bold shadow-inner">No Bet</span>
+                <span id="player-balance" class="text-3xl sm:text-5xl font-black text-white transition-all drop-shadow-[0_2px_10px_rgba(0,0,0,1)] font-serif-title">$100</span>
+                <span id="player-bet-tag" class="text-sm bg-black/80 border border-gray-600 px-4 py-2 rounded-lg text-gray-200 font-bold shadow-inner">No Bet</span>
             </div>
         </div>
 
-        <div id="npc-card" class="glass-panel p-4 sm:p-5 rounded-2xl border-r-4 border-r-red-500 flex flex-col justify-between text-right transition-all duration-300">
-            <div class="flex justify-between items-center mb-2 flex-row-reverse">
-                <span id="npc-name" class="text-sm uppercase font-black text-red-400 flex items-center gap-2">Rookie Rick <i class="fa-solid fa-robot"></i></span>
-                <span id="npc-status" class="text-[10px] bg-slate-800 px-2.5 py-1 rounded-lg text-slate-400 font-bold">Waiting</span>
+        <div id="npc-card" class="glass-panel p-4 sm:p-5 rounded-2xl border-r-4 border-r-red-600 flex flex-col justify-between text-right transition-all duration-300">
+            <div class="flex justify-between items-center mb-3 flex-row-reverse">
+                <span id="npc-name" class="text-sm sm:text-base uppercase font-black text-red-500 flex items-center gap-2 drop-shadow-md">Rookie Rick <i class="fa-solid fa-robot"></i></span>
+                <span id="npc-status" class="text-xs bg-black/60 px-3 py-1 rounded-lg text-gray-500 font-bold">Waiting</span>
             </div>
             <div class="flex justify-between items-end flex-row-reverse">
-                <span id="npc-balance" class="text-2xl sm:text-4xl font-black text-emerald-400 transition-all drop-shadow-md">$100</span>
-                <span id="npc-bet-tag" class="text-xs bg-slate-900/90 border border-slate-600 px-3 py-1.5 rounded-lg text-slate-200 font-bold shadow-inner">No Bet</span>
+                <span id="npc-balance" class="text-3xl sm:text-5xl font-black text-white transition-all drop-shadow-[0_2px_10px_rgba(0,0,0,1)] font-serif-title">$100</span>
+                <span id="npc-bet-tag" class="text-sm bg-black/80 border border-gray-600 px-4 py-2 rounded-lg text-gray-200 font-bold shadow-inner">No Bet</span>
             </div>
         </div>
     </section>
@@ -177,182 +185,186 @@
             </div>
 
             <!-- Highly Realistic 3D Wheel Wrapper -->
-            <div id="wheel-wrapper" class="relative w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] md:w-[420px] md:h-[420px] flex items-center justify-center rounded-full transition-all duration-300" style="box-shadow: 0 25px 60px rgba(0,0,0,0.9), inset 0 0 35px rgba(0,0,0,1);">
-                <!-- Premium Gold/Bronze Outer Bezel -->
-                <div class="absolute inset-0 rounded-full border-[12px] border-yellow-700/80 shadow-[inset_0_0_25px_#000] bg-gradient-to-br from-[#1c1917] via-[#0f172a] to-[#1c1917] p-2" style="border-style: ridge; border-color: #92400e #fcd34d #a16207 #fef08a;"></div>
+            <div id="wheel-wrapper" class="relative w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] md:w-[420px] md:h-[420px] flex items-center justify-center rounded-full transition-all duration-300" style="box-shadow: 0 35px 60px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,1);">
+                <!-- Premium Gold Outer Bezel -->
+                <div class="absolute inset-0 rounded-full border-[14px] shadow-[inset_0_0_30px_#000,0_0_20px_rgba(212,175,55,0.3)] bg-gradient-to-br from-[#111] via-[#222] to-[#111] p-2" style="border-style: ridge; border-color: #8b6914 #f9f295 #d4af37 #8b6914;"></div>
                 
-                <canvas id="roulette-canvas" class="w-full h-full rounded-full z-10" style="box-shadow: inset 0 0 50px rgba(0,0,0,1);"></canvas>
+                <canvas id="roulette-canvas" class="w-full h-full rounded-full z-10" style="box-shadow: inset 0 0 60px rgba(0,0,0,1);"></canvas>
                 
-                <!-- Restored Central Yellow Crown -->
-                <div class="absolute z-20 w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-yellow-300 via-amber-600 to-yellow-800 rounded-full border-4 border-yellow-200 shadow-[0_15px_30px_rgba(0,0,0,0.9)] flex items-center justify-center pointer-events-none">
-                    <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-slate-950 border-2 border-yellow-400/60 flex items-center justify-center shadow-[inset_0_0_15px_rgba(0,0,0,0.8)]">
-                        <i class="fa-solid fa-crown text-base sm:text-2xl text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]"></i>
+                <!-- Central Yellow Crown Turret -->
+                <div class="absolute z-20 w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-[#f9f295] via-[#d4af37] to-[#8b6914] rounded-full border-4 border-[#fff7d6] shadow-[0_20px_40px_rgba(0,0,0,0.9)] flex items-center justify-center pointer-events-none">
+                    <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-black border-2 border-[#d4af37]/80 flex items-center justify-center shadow-[inset_0_0_20px_rgba(0,0,0,0.9)]">
+                        <i class="fa-solid fa-crown text-lg sm:text-2xl text-[#d4af37] drop-shadow-[0_0_10px_rgba(212,175,55,0.8)]"></i>
                     </div>
                 </div>
 
-                <div class="absolute -top-4 z-30 flex flex-col items-center">
-                    <div class="text-yellow-400 text-3xl sm:text-5xl drop-shadow-[0_5px_8px_rgba(0,0,0,0.9)]" style="transform: scaleY(1.1);"><i class="fa-solid fa-caret-down"></i></div>
+                <div class="absolute -top-5 z-30 flex flex-col items-center">
+                    <div class="text-[#d4af37] text-4xl sm:text-6xl drop-shadow-[0_8px_10px_rgba(0,0,0,1)]" style="transform: scaleY(1.1);"><i class="fa-solid fa-caret-down"></i></div>
                 </div>
-                <div id="spin-badge" class="hidden absolute top-8 z-30 bg-slate-900/95 text-yellow-400 px-5 py-2 rounded-full font-mono text-sm sm:text-base border border-yellow-500/50 shadow-[0_0_20px_rgba(245,158,11,0.4)] animate-bounce font-bold">
+                <div id="spin-badge" class="hidden absolute top-10 z-30 bg-black/95 text-[#d4af37] px-6 py-2.5 rounded-full font-mono text-sm sm:text-base border-2 border-[#d4af37]/60 shadow-[0_0_25px_rgba(212,175,55,0.6)] animate-bounce font-black">
                     <i class="fa-solid fa-spinner fa-spin mr-2"></i><span id="spinner-turn-text">Your Turn:</span> <span id="countdown-timer">5.0</span>s
                 </div>
             </div>
 
-            <div class="w-full max-w-sm mt-6 flex items-center justify-center gap-3 bg-slate-900/90 p-3 rounded-2xl border border-slate-700/60 shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
-                <span class="text-xs text-slate-400 uppercase font-black tracking-widest mr-1">History</span>
+            <div class="w-full max-w-sm mt-8 flex items-center justify-center gap-3 bg-black/80 p-3 rounded-2xl border border-gray-700/60 shadow-[inset_0_2px_15px_rgba(0,0,0,0.8)]">
+                <span class="text-xs text-[#d4af37] uppercase font-black tracking-widest mr-1">History</span>
                 <div id="history-container" class="flex gap-2 overflow-x-auto max-w-[260px] pb-1"></div>
             </div>
         </div>
 
         <!-- Betting Controls Section -->
         <div id="betting-controls" class="w-full lg:w-1/2 flex flex-col gap-5 opacity-40 pointer-events-none transition-opacity duration-300">
-            <div class="glass-panel p-4 sm:p-5 rounded-2xl flex flex-col gap-3">
-                <span class="text-xs uppercase font-black text-slate-400 tracking-widest">1. Choose Your Bet Color</span>
-                <div class="grid grid-cols-3 gap-3">
-                    <button data-color="red" class="color-btn relative group p-4 sm:p-5 rounded-xl border border-red-500/40 bg-gradient-to-b from-red-900/60 to-red-950/90 hover:border-red-400 transition-all flex flex-col items-center justify-center gap-1.5 shadow-lg">
-                        <span class="font-black text-lg sm:text-xl text-red-400 tracking-wide drop-shadow-md">RED</span>
-                        <span class="bg-red-950 text-red-200 text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded border border-red-500/50">+2X BONUS</span>
-                        <div class="bet-indicator hidden absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]"></div>
+            <div class="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col gap-4">
+                <span class="text-xs sm:text-sm uppercase font-black text-[#d4af37] tracking-widest text-center border-b border-[#d4af37]/30 pb-2">1. Place Your Wager</span>
+                <div class="grid grid-cols-3 gap-3 sm:gap-4">
+                    <button data-color="red" class="color-btn relative group p-5 rounded-xl border border-red-500/50 bg-gradient-to-b from-red-800 to-red-950 hover:border-red-400 transition-all flex flex-col items-center justify-center gap-2 shadow-[0_10px_20px_rgba(0,0,0,0.6)]">
+                        <span class="font-black text-xl sm:text-2xl text-red-400 tracking-wider drop-shadow-lg">RED</span>
+                        <span class="bg-black/60 text-white text-xs font-black px-3 py-1 rounded border border-red-500/50">+2X PAYOUT</span>
+                        <div class="bet-indicator hidden absolute top-3 right-3 w-4 h-4 rounded-full bg-red-500 shadow-[0_0_12px_#ef4444] border-2 border-white"></div>
                     </button>
-                    <button data-color="green" class="color-btn glow-green relative group p-4 sm:p-5 rounded-xl border border-emerald-500/50 bg-gradient-to-b from-emerald-900/60 to-emerald-950/90 hover:border-emerald-400 transition-all flex flex-col items-center justify-center gap-1.5 shadow-lg">
-                        <span class="font-black text-lg sm:text-xl text-emerald-400 tracking-wide drop-shadow-md">GREEN</span>
-                        <span class="bg-emerald-950 text-emerald-200 text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded border border-emerald-400/60">+25X BONUS</span>
-                        <div class="bet-indicator hidden absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]"></div>
+                    <button data-color="green" class="color-btn glow-green relative group p-5 rounded-xl border border-emerald-500/60 bg-gradient-to-b from-emerald-800 to-emerald-950 hover:border-emerald-400 transition-all flex flex-col items-center justify-center gap-2 shadow-[0_10px_20px_rgba(0,0,0,0.6)]">
+                        <span class="font-black text-xl sm:text-2xl text-emerald-400 tracking-wider drop-shadow-lg">GREEN</span>
+                        <span class="bg-black/60 text-white text-xs font-black px-3 py-1 rounded border border-emerald-400/60">+25X JACKPOT</span>
+                        <div class="bet-indicator hidden absolute top-3 right-3 w-4 h-4 rounded-full bg-emerald-400 shadow-[0_0_12px_#34d399] border-2 border-white"></div>
                     </button>
-                    <button data-color="black" class="color-btn relative group p-4 sm:p-5 rounded-xl border border-slate-500/50 bg-gradient-to-b from-slate-800/80 to-slate-950 hover:border-slate-400 transition-all flex flex-col items-center justify-center gap-1.5 shadow-lg">
-                        <span class="font-black text-lg sm:text-xl text-slate-200 tracking-wide drop-shadow-md">BLACK</span>
-                        <span class="bg-slate-900 text-slate-300 text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded border border-slate-500/60">+2X BONUS</span>
-                        <div class="bet-indicator hidden absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-slate-200 shadow-[0_0_10px_#e2e8f0]"></div>
+                    <button data-color="black" class="color-btn relative group p-5 rounded-xl border border-gray-500/50 bg-gradient-to-b from-gray-800 to-black hover:border-gray-400 transition-all flex flex-col items-center justify-center gap-2 shadow-[0_10px_20px_rgba(0,0,0,0.6)]">
+                        <span class="font-black text-xl sm:text-2xl text-gray-200 tracking-wider drop-shadow-lg">BLACK</span>
+                        <span class="bg-black/60 text-white text-xs font-black px-3 py-1 rounded border border-gray-500/60">+2X PAYOUT</span>
+                        <div class="bet-indicator hidden absolute top-3 right-3 w-4 h-4 rounded-full bg-gray-300 shadow-[0_0_12px_#ffffff] border-2 border-black"></div>
                     </button>
                 </div>
             </div>
 
-            <div class="glass-panel p-4 sm:p-5 rounded-2xl flex flex-col gap-3">
-                <div class="flex justify-between items-center">
-                    <span class="text-xs uppercase font-black text-slate-400 tracking-widest">2. Select Bet Wager</span>
-                    <span id="current-bet-display" class="text-sm sm:text-base font-black text-yellow-400 bg-yellow-900/30 px-3 py-1 rounded-lg border border-yellow-600/30">Selected: $10</span>
+            <div class="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col gap-4">
+                <div class="flex justify-between items-center border-b border-[#d4af37]/30 pb-2">
+                    <span class="text-xs sm:text-sm uppercase font-black text-[#d4af37] tracking-widest">2. Select Chip Value</span>
+                    <span id="current-bet-display" class="text-sm sm:text-base font-black text-[#d4af37] bg-black/60 px-4 py-1.5 rounded-lg border border-[#d4af37]/50 shadow-inner">Selected: $10</span>
                 </div>
-                <div class="grid grid-cols-5 gap-2 sm:gap-3">
-                    <button data-amount="10" class="chip-btn chip chip-selected rounded-full h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-b from-blue-400 to-blue-700 text-white font-black text-xs sm:text-sm flex items-center justify-center justify-self-center border-2 border-blue-300">$10</button>
-                    <button data-amount="25" class="chip-btn chip rounded-full h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-b from-green-400 to-green-700 text-white font-black text-xs sm:text-sm flex items-center justify-center justify-self-center border-2 border-green-300">$25</button>
-                    <button data-amount="50" class="chip-btn chip rounded-full h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-b from-purple-400 to-purple-700 text-white font-black text-xs sm:text-sm flex items-center justify-center justify-self-center border-2 border-purple-300">$50</button>
-                    <button data-amount="100" class="chip-btn chip rounded-full h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-b from-slate-700 to-slate-950 text-yellow-400 font-black text-xs sm:text-sm flex items-center justify-center justify-self-center border-2 border-yellow-500">$100</button>
-                    <button data-amount="all" class="chip-btn chip rounded-full h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-b from-red-500 to-red-800 text-white font-black text-[10px] sm:text-xs uppercase flex items-center justify-center justify-self-center border-2 border-red-300">MAX</button>
+                <div class="grid grid-cols-5 gap-2 sm:gap-4 mt-2">
+                    <!-- Updated Casino chips -->
+                    <button data-amount="10" class="chip-btn chip chip-selected rounded-full h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-b from-blue-400 to-blue-800 text-white font-black text-sm sm:text-base flex items-center justify-center justify-self-center">$10</button>
+                    <button data-amount="25" class="chip-btn chip rounded-full h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-b from-green-400 to-green-800 text-white font-black text-sm sm:text-base flex items-center justify-center justify-self-center">$25</button>
+                    <button data-amount="50" class="chip-btn chip rounded-full h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-b from-purple-400 to-purple-800 text-white font-black text-sm sm:text-base flex items-center justify-center justify-self-center">$50</button>
+                    <button data-amount="100" class="chip-btn chip rounded-full h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-b from-gray-700 to-black text-[#d4af37] font-black text-sm sm:text-base flex items-center justify-center justify-self-center border border-[#d4af37]">$100</button>
+                    <button data-amount="all" class="chip-btn chip rounded-full h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-b from-red-500 to-red-900 text-white font-black text-xs sm:text-sm uppercase flex items-center justify-center justify-self-center">MAX</button>
                 </div>
             </div>
 
             <div class="flex gap-3">
-                <button id="spin-btn" disabled class="flex-1 py-4 rounded-2xl bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black text-xl tracking-widest uppercase shadow-[0_0_25px_rgba(245,158,11,0.4)] disabled:opacity-40 disabled:cursor-not-allowed transition-all border-2 border-yellow-200">
-                    CONFIRM BET & SPIN
+                <button id="spin-btn" disabled class="flex-1 py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-[#d4af37] via-[#f9f295] to-[#d4af37] hover:brightness-110 text-black font-black text-xl sm:text-2xl tracking-widest uppercase shadow-[0_10px_30px_rgba(212,175,55,0.4)] disabled:opacity-30 disabled:cursor-not-allowed transition-all border-2 border-[#fff7d6]">
+                    CONFIRM & SPIN
                 </button>
             </div>
         </div>
     </main>
 
     <!-- Match Setup Modal -->
-    <div id="opponent-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
-        <div class="glass-panel gold-border p-6 rounded-3xl max-w-lg w-full text-center flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
+    <div id="opponent-modal" class="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
+        <div class="glass-panel gold-border p-8 rounded-3xl max-w-xl w-full text-center flex flex-col gap-6 max-h-[90vh] overflow-y-auto shadow-[0_30px_60px_rgba(0,0,0,1)]">
             <div>
-                <h2 class="font-serif-title text-2xl sm:text-3xl font-black gold-gradient-text mb-1">NEW MATCH</h2>
-                <p class="text-slate-300 text-sm font-semibold">Your Bankroll: <span id="modal-bankroll" class="text-emerald-400 font-black">$100</span></p>
+                <h2 class="font-serif-title text-3xl sm:text-4xl font-black gold-gradient-text mb-2 drop-shadow-lg">NEW MATCH</h2>
+                <p class="text-gray-300 text-sm font-bold tracking-widest">Available Funds: <span id="modal-bankroll" class="text-[#d4af37] font-black text-lg">$100</span></p>
             </div>
 
             <!-- Configuration Selectors -->
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-700 flex flex-col gap-2 items-center">
-                    <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Match Rounds</span>
-                    <div class="flex gap-1.5" id="round-selector">
-                        <button data-rounds="5" class="round-btn px-2 py-1.5 rounded-lg bg-slate-800 text-[11px] font-bold text-slate-300 border border-slate-600 hover:border-yellow-500 transition">5</button>
-                        <button data-rounds="10" class="round-btn px-2 py-1.5 rounded-lg bg-yellow-500 text-slate-950 text-[11px] font-black border border-yellow-400 transition">10</button>
-                        <button data-rounds="15" class="round-btn px-2 py-1.5 rounded-lg bg-slate-800 text-[11px] font-bold text-slate-300 border border-slate-600 hover:border-yellow-500 transition">15</button>
-                        <button data-rounds="20" class="round-btn px-2 py-1.5 rounded-lg bg-slate-800 text-[11px] font-bold text-slate-300 border border-slate-600 hover:border-yellow-500 transition">20</button>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-black/60 p-4 rounded-2xl border border-gray-700 flex flex-col gap-3 items-center shadow-inner">
+                    <span class="text-[11px] uppercase font-black text-[#d4af37] tracking-widest">Match Rounds</span>
+                    <div class="flex gap-2" id="round-selector">
+                        <button data-rounds="5" class="round-btn px-3 py-2 rounded-lg bg-gray-800 text-xs font-bold text-gray-300 border border-gray-600 hover:border-[#d4af37] transition">5</button>
+                        <button data-rounds="10" class="round-btn px-3 py-2 rounded-lg bg-[#d4af37] text-black text-xs font-black border border-[#fff7d6] transition shadow-[0_0_15px_rgba(212,175,55,0.4)]">10</button>
+                        <button data-rounds="15" class="round-btn px-3 py-2 rounded-lg bg-gray-800 text-xs font-bold text-gray-300 border border-gray-600 hover:border-[#d4af37] transition">15</button>
+                        <button data-rounds="20" class="round-btn px-3 py-2 rounded-lg bg-gray-800 text-xs font-bold text-gray-300 border border-gray-600 hover:border-[#d4af37] transition">20</button>
                     </div>
                 </div>
 
-                <div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-700 flex flex-col gap-2 items-center">
-                    <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Time Limit</span>
-                    <div class="flex gap-1.5" id="time-selector">
-                        <button data-time="60" class="time-btn px-2 py-1.5 rounded-lg bg-slate-800 text-[11px] font-bold text-slate-300 border border-slate-600 hover:border-yellow-500 transition">1M</button>
-                        <button data-time="180" class="time-btn px-2 py-1.5 rounded-lg bg-yellow-500 text-slate-950 text-[11px] font-black border border-yellow-400 transition">3M</button>
-                        <button data-time="300" class="time-btn px-2 py-1.5 rounded-lg bg-slate-800 text-[11px] font-bold text-slate-300 border border-slate-600 hover:border-yellow-500 transition">5M</button>
+                <div class="bg-black/60 p-4 rounded-2xl border border-gray-700 flex flex-col gap-3 items-center shadow-inner">
+                    <span class="text-[11px] uppercase font-black text-[#d4af37] tracking-widest">Time Limit</span>
+                    <div class="flex gap-2" id="time-selector">
+                        <button data-time="60" class="time-btn px-3 py-2 rounded-lg bg-gray-800 text-xs font-bold text-gray-300 border border-gray-600 hover:border-[#d4af37] transition">1M</button>
+                        <button data-time="180" class="time-btn px-3 py-2 rounded-lg bg-[#d4af37] text-black text-xs font-black border border-[#fff7d6] transition shadow-[0_0_15px_rgba(212,175,55,0.4)]">3M</button>
+                        <button data-time="300" class="time-btn px-3 py-2 rounded-lg bg-gray-800 text-xs font-bold text-gray-300 border border-gray-600 hover:border-[#d4af37] transition">5M</button>
                     </div>
                 </div>
             </div>
 
             <!-- Multiplayer Section -->
-            <div class="p-4 rounded-2xl border border-blue-500/40 bg-blue-950/40 flex flex-col gap-3 shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]">
-                <h3 class="text-xs font-black text-blue-400 uppercase tracking-widest text-left">Multiplayer (Play with Friend)</h3>
-                <div class="flex gap-2">
-                    <button id="create-mp-btn" class="flex-1 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-black rounded-xl text-xs uppercase transition shadow-lg border border-blue-400/50">
+            <div class="p-5 rounded-2xl border border-blue-500/50 bg-blue-900/20 flex flex-col gap-4 shadow-[inset_0_0_30px_rgba(59,130,246,0.1)]">
+                <h3 class="text-sm font-black text-blue-400 uppercase tracking-widest text-left flex justify-between items-center">
+                    Multiplayer
+                    <span class="text-red-400 font-bold text-[10px]">* Can't create room on PC</span>
+                </h3>
+                <div class="flex gap-3">
+                    <button id="create-mp-btn" class="flex-1 py-3 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-600 hover:to-indigo-700 text-white font-black rounded-xl text-xs sm:text-sm uppercase transition shadow-lg border border-blue-400/50">
                         Create MP Game
                     </button>
                 </div>
-                <div class="flex gap-2">
-                    <input type="text" id="join-mp-code" placeholder="Enter Room Code" class="flex-1 bg-slate-950 border border-slate-600 rounded-xl px-4 py-2.5 text-white text-center font-mono uppercase font-bold focus:outline-none focus:border-blue-400">
-                    <button id="join-mp-btn" class="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-black rounded-xl text-xs uppercase transition border border-slate-500">
+                <div class="flex gap-3">
+                    <input type="text" id="join-mp-code" placeholder="ENTER ROOM CODE" class="flex-1 bg-black border-2 border-gray-700 rounded-xl px-4 py-3 text-white text-center font-mono uppercase font-bold focus:outline-none focus:border-blue-500 shadow-inner">
+                    <button id="join-mp-btn" class="px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white font-black rounded-xl text-xs sm:text-sm uppercase transition border-2 border-gray-500 shadow-lg">
                         Join
                     </button>
                 </div>
             </div>
 
             <!-- Single Player NPC List -->
-            <div class="grid grid-cols-1 gap-2.5 text-left max-h-[35vh] overflow-y-auto pr-2">
-                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mt-1 mb-0.5">Single Player (vs AI)</h3>
+            <div class="grid grid-cols-1 gap-3 text-left max-h-[35vh] overflow-y-auto pr-2">
+                <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mt-2 mb-1">Single Player (vs AI)</h3>
                 
-                <button data-npc="0" class="npc-select-btn p-3 rounded-2xl border border-slate-600 bg-slate-800/80 hover:border-yellow-500 hover:bg-slate-800 transition flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-full bg-blue-900/60 border border-blue-400 flex items-center justify-center text-xl text-blue-300">👦</div>
+                <button data-npc="0" class="npc-select-btn p-3.5 rounded-2xl border-2 border-gray-700 bg-black/60 hover:border-[#d4af37] hover:bg-gray-900 transition flex items-center gap-4 group">
+                    <div class="w-14 h-14 rounded-full bg-blue-900/60 border-2 border-blue-400 flex items-center justify-center text-2xl text-blue-300 shadow-inner">👦</div>
                     <div class="flex-1">
-                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-100 group-hover:text-yellow-400">Rookie Rick</h3><span class="text-[9px] font-black bg-blue-900/80 text-blue-300 px-2 py-0.5 rounded border border-blue-500/50">EASY</span></div>
-                        <p class="text-xs text-slate-400 mt-0.5">Low bets ($10-$50). Rarely bets Green.</p>
+                        <div class="flex justify-between items-center"><h3 class="font-black text-base text-white group-hover:text-[#d4af37]">Rookie Rick</h3><span class="text-[10px] font-black bg-blue-900/80 text-blue-300 px-3 py-1 rounded border border-blue-500/50">EASY</span></div>
+                        <p class="text-xs text-gray-400 mt-1">Low bets ($10-$50). Rarely bets Green.</p>
                     </div>
                 </button>
-                <button data-npc="1" class="npc-select-btn p-3 rounded-2xl border border-slate-600 bg-slate-800/80 hover:border-yellow-500 hover:bg-slate-800 transition flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-full bg-teal-900/60 border border-teal-400 flex items-center justify-center text-xl text-teal-300">👴</div>
+                <button data-npc="1" class="npc-select-btn p-3.5 rounded-2xl border-2 border-gray-700 bg-black/60 hover:border-[#d4af37] hover:bg-gray-900 transition flex items-center gap-4 group">
+                    <div class="w-14 h-14 rounded-full bg-teal-900/60 border-2 border-teal-400 flex items-center justify-center text-2xl text-teal-300 shadow-inner">👴</div>
                     <div class="flex-1">
-                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-100 group-hover:text-yellow-400">Cautious Carl</h3><span class="text-[9px] font-black bg-teal-900/80 text-teal-300 px-2 py-0.5 rounded border border-teal-500/50">EASY</span></div>
-                        <p class="text-xs text-slate-400 mt-0.5">Only bets Red or Black. Never bets big.</p>
+                        <div class="flex justify-between items-center"><h3 class="font-black text-base text-white group-hover:text-[#d4af37]">Cautious Carl</h3><span class="text-[10px] font-black bg-teal-900/80 text-teal-300 px-3 py-1 rounded border border-teal-500/50">EASY</span></div>
+                        <p class="text-xs text-gray-400 mt-1">Only bets Red or Black. Never bets big.</p>
                     </div>
                 </button>
-                <button data-npc="2" class="npc-select-btn p-3 rounded-2xl border border-slate-600 bg-slate-800/80 hover:border-yellow-500 hover:bg-slate-800 transition flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-full bg-purple-900/60 border border-purple-400 flex items-center justify-center text-xl text-purple-300">👩‍💼</div>
+                <button data-npc="2" class="npc-select-btn p-3.5 rounded-2xl border-2 border-gray-700 bg-black/60 hover:border-[#d4af37] hover:bg-gray-900 transition flex items-center gap-4 group">
+                    <div class="w-14 h-14 rounded-full bg-purple-900/60 border-2 border-purple-400 flex items-center justify-center text-2xl text-purple-300 shadow-inner">👩‍💼</div>
                     <div class="flex-1">
-                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-100 group-hover:text-yellow-400">High-Roller Hannah</h3><span class="text-[9px] font-black bg-purple-900/80 text-purple-300 px-2 py-0.5 rounded border border-purple-500/50">MEDIUM</span></div>
-                        <p class="text-xs text-slate-400 mt-0.5">Aggressive gambler. Hunts Green 25x often.</p>
+                        <div class="flex justify-between items-center"><h3 class="font-black text-base text-white group-hover:text-[#d4af37]">High-Roller Hannah</h3><span class="text-[10px] font-black bg-purple-900/80 text-purple-300 px-3 py-1 rounded border border-purple-500/50">MEDIUM</span></div>
+                        <p class="text-xs text-gray-400 mt-1">Aggressive gambler. Hunts Green 25x often.</p>
                     </div>
                 </button>
-                <button data-npc="3" class="npc-select-btn p-3 rounded-2xl border border-slate-600 bg-slate-800/80 hover:border-yellow-500 hover:bg-slate-800 transition flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-full bg-red-900/60 border border-red-400 flex items-center justify-center text-xl text-red-300">🤖</div>
+                <button data-npc="3" class="npc-select-btn p-3.5 rounded-2xl border-2 border-gray-700 bg-black/60 hover:border-[#d4af37] hover:bg-gray-900 transition flex items-center gap-4 group">
+                    <div class="w-14 h-14 rounded-full bg-red-900/60 border-2 border-red-400 flex items-center justify-center text-2xl text-red-300 shadow-inner">🤖</div>
                     <div class="flex-1">
-                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-100 group-hover:text-yellow-400">Gamble-Bot 3000</h3><span class="text-[9px] font-black bg-red-900/80 text-red-300 px-2 py-0.5 rounded border border-red-500/50">HARD</span></div>
-                        <p class="text-xs text-slate-400 mt-0.5">Calculates your score and goes all-in if behind.</p>
+                        <div class="flex justify-between items-center"><h3 class="font-black text-base text-white group-hover:text-[#d4af37]">Gamble-Bot 3000</h3><span class="text-[10px] font-black bg-red-900/80 text-red-300 px-3 py-1 rounded border border-red-500/50">HARD</span></div>
+                        <p class="text-xs text-gray-400 mt-1">Calculates your score and goes all-in if behind.</p>
                     </div>
                 </button>
-                <button data-npc="4" class="npc-select-btn p-3 rounded-2xl border border-slate-600 bg-slate-800/80 hover:border-yellow-500 hover:bg-slate-800 transition flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-full bg-pink-900/60 border border-pink-400 flex items-center justify-center text-xl text-pink-300">💃</div>
+                <button data-npc="4" class="npc-select-btn p-3.5 rounded-2xl border-2 border-gray-700 bg-black/60 hover:border-[#d4af37] hover:bg-gray-900 transition flex items-center gap-4 group">
+                    <div class="w-14 h-14 rounded-full bg-pink-900/60 border-2 border-pink-400 flex items-center justify-center text-2xl text-pink-300 shadow-inner">💃</div>
                     <div class="flex-1">
-                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-100 group-hover:text-yellow-400">Risk-Taker Ruby</h3><span class="text-[9px] font-black bg-pink-900/80 text-pink-300 px-2 py-0.5 rounded border border-pink-500/50">HARD</span></div>
-                        <p class="text-xs text-slate-400 mt-0.5">Crazy bets. Will drop everything on Green randomly.</p>
+                        <div class="flex justify-between items-center"><h3 class="font-black text-base text-white group-hover:text-[#d4af37]">Risk-Taker Ruby</h3><span class="text-[10px] font-black bg-pink-900/80 text-pink-300 px-3 py-1 rounded border border-pink-500/50">HARD</span></div>
+                        <p class="text-xs text-gray-400 mt-1">Crazy bets. Will drop everything on Green randomly.</p>
                     </div>
                 </button>
-                <button data-npc="5" class="npc-select-btn p-3 rounded-2xl border border-slate-600 bg-slate-800/80 hover:border-yellow-500 hover:bg-slate-800 transition flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-full bg-emerald-900/60 border border-emerald-400 flex items-center justify-center text-xl text-emerald-300">🍀</div>
+                <button data-npc="5" class="npc-select-btn p-3.5 rounded-2xl border-2 border-gray-700 bg-black/60 hover:border-[#d4af37] hover:bg-gray-900 transition flex items-center gap-4 group">
+                    <div class="w-14 h-14 rounded-full bg-emerald-900/60 border-2 border-emerald-400 flex items-center justify-center text-2xl text-emerald-300 shadow-inner">🍀</div>
                     <div class="flex-1">
-                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-100 group-hover:text-yellow-400">Lucky Luke</h3><span class="text-[9px] font-black bg-emerald-900/80 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/50">EXPERT</span></div>
-                        <p class="text-xs text-slate-400 mt-0.5">Has uncanny luck hitting green pockets.</p>
+                        <div class="flex justify-between items-center"><h3 class="font-black text-base text-white group-hover:text-[#d4af37]">Lucky Luke</h3><span class="text-[10px] font-black bg-emerald-900/80 text-emerald-300 px-3 py-1 rounded border border-emerald-500/50">EXPERT</span></div>
+                        <p class="text-xs text-gray-400 mt-1">Has uncanny luck hitting green pockets.</p>
                     </div>
                 </button>
-                <button data-npc="6" class="npc-select-btn p-3 rounded-2xl border border-slate-600 bg-slate-800/80 hover:border-yellow-500 hover:bg-slate-800 transition flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-full bg-gray-700 border border-gray-400 flex items-center justify-center text-xl text-gray-300">👻</div>
+                <button data-npc="6" class="npc-select-btn p-3.5 rounded-2xl border-2 border-gray-700 bg-black/60 hover:border-[#d4af37] hover:bg-gray-900 transition flex items-center gap-4 group">
+                    <div class="w-14 h-14 rounded-full bg-slate-700 border-2 border-slate-400 flex items-center justify-center text-2xl text-slate-300 shadow-inner">👻</div>
                     <div class="flex-1">
-                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-100 group-hover:text-yellow-400">The Phantom</h3><span class="text-[9px] font-black bg-gray-800 text-gray-300 px-2 py-0.5 rounded border border-gray-500/50">MASTER</span></div>
-                        <p class="text-xs text-slate-400 mt-0.5">Plays perfectly and slowly drains your balance.</p>
+                        <div class="flex justify-between items-center"><h3 class="font-black text-base text-white group-hover:text-[#d4af37]">The Phantom</h3><span class="text-[10px] font-black bg-slate-800 text-slate-300 px-3 py-1 rounded border border-slate-500/50">MASTER</span></div>
+                        <p class="text-xs text-gray-400 mt-1">Plays perfectly and slowly drains your balance.</p>
                     </div>
                 </button>
-                <button data-npc="7" class="npc-select-btn p-3 rounded-2xl border border-slate-600 bg-slate-800/80 hover:border-yellow-500 hover:bg-slate-800 transition flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-full bg-amber-900/60 border border-amber-400 flex items-center justify-center text-xl text-amber-300">👑</div>
+                <button data-npc="7" class="npc-select-btn p-3.5 rounded-2xl border-2 border-gray-700 bg-black/60 hover:border-[#d4af37] hover:bg-gray-900 transition flex items-center gap-4 group">
+                    <div class="w-14 h-14 rounded-full bg-yellow-900/60 border-2 border-[#d4af37] flex items-center justify-center text-2xl text-[#d4af37] shadow-[inset_0_0_15px_rgba(212,175,55,0.4)]">👑</div>
                     <div class="flex-1">
-                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-100 group-hover:text-yellow-400">The Grandmaster</h3><span class="text-[9px] font-black bg-amber-900/80 text-amber-300 px-2 py-0.5 rounded border border-amber-500/50">MASTER</span></div>
-                        <p class="text-xs text-slate-400 mt-0.5">The ultimate casino boss. Unforgiving strategy.</p>
+                        <div class="flex justify-between items-center"><h3 class="font-black text-base text-white group-hover:text-[#d4af37]">The Grandmaster</h3><span class="text-[10px] font-black bg-yellow-900/80 text-[#d4af37] px-3 py-1 rounded border border-[#d4af37]/50">MASTER</span></div>
+                        <p class="text-xs text-gray-400 mt-1">The ultimate casino boss. Unforgiving strategy.</p>
                     </div>
                 </button>
             </div>
@@ -360,93 +372,93 @@
     </div>
 
     <!-- MP Waiting Modal -->
-    <div id="mp-waiting-modal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-lg flex items-center justify-center z-[60] hidden">
+    <div id="mp-waiting-modal" class="fixed inset-0 bg-black/95 backdrop-blur-lg flex items-center justify-center z-[60] hidden">
         <div class="text-center flex flex-col items-center gap-6">
-            <i class="fa-solid fa-spinner fa-spin text-5xl text-blue-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.8)]"></i>
+            <i class="fa-solid fa-spinner fa-spin text-6xl text-blue-500 drop-shadow-[0_0_20px_rgba(59,130,246,0.8)]"></i>
             <div>
-                <h2 class="font-serif-title text-2xl font-black text-white mb-2 tracking-wide">WAITING FOR FRIEND</h2>
-                <p class="text-slate-400">Give your friend this Room Code to join:</p>
+                <h2 class="font-serif-title text-3xl font-black text-white mb-2 tracking-wider">WAITING FOR FRIEND</h2>
+                <p class="text-gray-400 text-lg">Give your friend this Room Code to join:</p>
             </div>
-            <div class="bg-slate-900 border-2 border-blue-500 px-10 py-5 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.3)]">
-                <span id="waiting-room-code" class="text-4xl sm:text-5xl font-black text-blue-400 tracking-widest font-mono">---</span>
+            <div class="bg-black border-4 border-blue-500 px-12 py-6 rounded-3xl shadow-[0_0_40px_rgba(59,130,246,0.4)]">
+                <span id="waiting-room-code" class="text-5xl sm:text-6xl font-black text-blue-400 tracking-widest font-mono">---</span>
             </div>
-            <button id="cancel-mp-btn" class="text-slate-400 hover:text-white underline text-sm mt-4 transition">Cancel Room</button>
+            <button id="cancel-mp-btn" class="text-gray-500 hover:text-white underline text-base mt-6 transition font-bold">Cancel Room</button>
         </div>
     </div>
 
     <!-- Shop Modal -->
-    <div id="shop-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-[65] p-4 opacity-0 pointer-events-none transition-all duration-300">
-        <div class="glass-panel gold-border p-6 rounded-3xl max-w-md w-full text-center flex flex-col gap-6">
+    <div id="shop-modal" class="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-[65] p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel gold-border p-8 rounded-3xl max-w-lg w-full text-center flex flex-col gap-6 shadow-[0_30px_60px_rgba(0,0,0,1)]">
             <div class="flex justify-between items-center">
-                <h2 class="font-serif-title text-2xl font-black gold-gradient-text">EFFECTS SHOP</h2>
-                <button id="close-shop-btn" class="text-slate-400 hover:text-white px-2 py-1 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <h2 class="font-serif-title text-3xl font-black gold-gradient-text drop-shadow-md">EFFECTS SHOP</h2>
+                <button id="close-shop-btn" class="text-gray-400 hover:text-white px-2 py-1 transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
             </div>
             
-            <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-700 flex justify-between items-center shadow-inner">
-                <span class="text-sm font-bold text-slate-400">Global Bankroll:</span>
-                <span id="shop-bankroll" class="text-xl font-black text-emerald-400">$100</span>
+            <div class="bg-black/80 p-5 rounded-xl border border-gray-700 flex justify-between items-center shadow-inner">
+                <span class="text-base font-black text-gray-400 uppercase tracking-widest">Global Bankroll:</span>
+                <span id="shop-bankroll" class="text-2xl font-black text-[#d4af37]">$100</span>
             </div>
 
             <div class="grid grid-cols-1 gap-4 text-left">
                 <!-- Blue Lightning Effect -->
-                <div class="p-4 rounded-2xl border border-slate-600 bg-slate-800/80 flex items-center gap-4 shadow-lg">
-                    <div class="w-14 h-14 rounded-xl bg-blue-900/50 border-2 border-blue-400 flex items-center justify-center text-2xl text-blue-400 shadow-[inset_0_0_10px_rgba(59,130,246,0.5)]">⚡</div>
+                <div class="p-5 rounded-2xl border-2 border-gray-700 bg-gray-900/80 flex items-center gap-5 shadow-lg">
+                    <div class="w-16 h-16 rounded-xl bg-blue-900/50 border-2 border-blue-400 flex items-center justify-center text-3xl text-blue-400 shadow-[inset_0_0_15px_rgba(59,130,246,0.5)]">⚡</div>
                     <div class="flex-1">
-                        <h3 class="font-black text-sm text-slate-100">Blue Lightning</h3>
-                        <p class="text-xs text-slate-400 mt-1">Massive lightning strike explosion ($250).</p>
+                        <h3 class="font-black text-lg text-white">Blue Lightning</h3>
+                        <p class="text-sm text-gray-400 mt-1">Massive lightning strike explosion ($250).</p>
                     </div>
-                    <button id="buy-lightning-btn" class="shop-btn px-4 py-2.5 bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-slate-950 font-black rounded-xl text-xs uppercase transition min-w-[90px] shadow-md border border-yellow-300">
+                    <button id="buy-lightning-btn" class="shop-btn px-5 py-3 bg-gradient-to-b from-[#f9f295] to-[#d4af37] hover:brightness-110 text-black font-black rounded-xl text-sm uppercase transition min-w-[100px] shadow-[0_5px_15px_rgba(212,175,55,0.4)] border border-[#fff7d6]">
                         $250
                     </button>
                 </div>
 
                 <!-- Black Hole Effect -->
-                <div class="p-4 rounded-2xl border border-slate-600 bg-slate-800/80 flex items-center gap-4 shadow-lg">
-                    <div class="w-14 h-14 rounded-xl bg-purple-900/50 border-2 border-purple-400 flex items-center justify-center text-2xl text-purple-400 shadow-[inset_0_0_10px_rgba(168,85,247,0.5)]">🌌</div>
+                <div class="p-5 rounded-2xl border-2 border-gray-700 bg-gray-900/80 flex items-center gap-5 shadow-lg">
+                    <div class="w-16 h-16 rounded-xl bg-purple-900/50 border-2 border-purple-400 flex items-center justify-center text-3xl text-purple-400 shadow-[inset_0_0_15px_rgba(168,85,247,0.5)]">🌌</div>
                     <div class="flex-1">
-                        <h3 class="font-black text-sm text-slate-100">Black Hole</h3>
-                        <p class="text-xs text-slate-400 mt-1">Singularity sucks in the board ($500).</p>
+                        <h3 class="font-black text-lg text-white">Black Hole</h3>
+                        <p class="text-sm text-gray-400 mt-1">Singularity sucks in the board ($500).</p>
                     </div>
-                    <button id="buy-blackhole-btn" class="shop-btn px-4 py-2.5 bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-slate-950 font-black rounded-xl text-xs uppercase transition min-w-[90px] shadow-md border border-yellow-300">
+                    <button id="buy-blackhole-btn" class="shop-btn px-5 py-3 bg-gradient-to-b from-[#f9f295] to-[#d4af37] hover:brightness-110 text-black font-black rounded-xl text-sm uppercase transition min-w-[100px] shadow-[0_5px_15px_rgba(212,175,55,0.4)] border border-[#fff7d6]">
                         $500
                     </button>
                 </div>
             </div>
-            <p class="text-xs font-bold text-slate-500">*Only one effect can be active at a time.</p>
+            <p class="text-xs font-bold text-gray-500">*Only one effect can be active at a time.</p>
         </div>
     </div>
 
     <!-- Turn Spin Result Pop-up Modal -->
-    <div id="turn-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center z-50 opacity-0 pointer-events-none transition-all duration-300 p-4">
-        <div class="glass-panel gold-border p-8 rounded-3xl max-w-sm w-full text-center flex flex-col items-center gap-5 transform scale-90 transition-transform">
-            <div id="turn-icon-container" class="w-20 h-20 rounded-full flex items-center justify-center text-4xl shadow-[0_10px_20px_rgba(0,0,0,0.5)]"></div>
+    <div id="turn-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 opacity-0 pointer-events-none transition-all duration-300 p-4">
+        <div class="glass-panel gold-border p-10 rounded-3xl max-w-sm w-full text-center flex flex-col items-center gap-6 transform scale-90 transition-transform shadow-[0_30px_60px_rgba(0,0,0,0.9)]">
+            <div id="turn-icon-container" class="w-24 h-24 rounded-full flex items-center justify-center text-5xl shadow-[0_15px_30px_rgba(0,0,0,0.6)] border-4"></div>
             <div>
-                <h2 id="turn-title" class="font-serif-title text-2xl font-black mb-2 tracking-wide">YOU WON!</h2>
-                <p id="turn-desc" class="text-slate-300 text-sm font-semibold">The ball landed on Red.</p>
+                <h2 id="turn-title" class="font-serif-title text-3xl font-black mb-2 tracking-widest text-white">YOU WON!</h2>
+                <p id="turn-desc" class="text-gray-300 text-base font-bold">The ball landed on Red.</p>
             </div>
-            <div id="turn-amount" class="text-3xl font-black text-emerald-400 drop-shadow-md">+$100</div>
+            <div id="turn-amount" class="text-4xl font-black text-emerald-400 drop-shadow-lg">+$100</div>
             
-            <button id="turn-modal-btn" class="w-full py-3.5 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black rounded-xl transition uppercase text-sm tracking-widest shadow-lg border border-yellow-300">
+            <button id="turn-modal-btn" class="w-full py-4 bg-gradient-to-r from-[#d4af37] to-[#8b6914] hover:brightness-110 text-white font-black rounded-xl transition uppercase text-base tracking-widest shadow-[0_10px_20px_rgba(212,175,55,0.4)] border border-[#fff7d6]">
                 NEXT TURN
             </button>
         </div>
     </div>
 
     <!-- Match Game Over Modal -->
-    <div id="gameover-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-lg flex items-center justify-center z-[70] opacity-0 pointer-events-none transition-all duration-300 p-4">
-        <div class="glass-panel gold-border p-10 rounded-3xl max-w-sm w-full text-center flex flex-col items-center gap-5 transform scale-90 transition-transform shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
-            <div id="gameover-icon-container" class="w-24 h-24 rounded-full flex items-center justify-center text-5xl shadow-[0_10px_30px_rgba(0,0,0,0.6)]"></div>
+    <div id="gameover-modal" class="fixed inset-0 bg-black/95 backdrop-blur-lg flex items-center justify-center z-[70] opacity-0 pointer-events-none transition-all duration-300 p-4">
+        <div class="glass-panel gold-border p-12 rounded-3xl max-w-md w-full text-center flex flex-col items-center gap-6 transform scale-90 transition-transform shadow-[0_30px_80px_rgba(0,0,0,1)]">
+            <div id="gameover-icon-container" class="w-28 h-28 rounded-full flex items-center justify-center text-6xl shadow-[0_15px_40px_rgba(0,0,0,0.8)] border-4"></div>
             <div>
-                <h2 id="gameover-title" class="font-serif-title text-3xl font-black mb-2 tracking-widest">VICTORY!</h2>
-                <p id="gameover-desc" class="text-slate-300 text-sm font-semibold">You won the match!</p>
+                <h2 id="gameover-title" class="font-serif-title text-4xl font-black mb-3 tracking-widest text-white">VICTORY!</h2>
+                <p id="gameover-desc" class="text-gray-300 text-base font-bold">You won the match!</p>
             </div>
-            <div class="w-full bg-slate-900/90 p-4 rounded-xl border border-slate-700 text-sm flex justify-around shadow-inner">
-                <div class="flex flex-col"><span class="text-slate-500 text-[10px] font-black uppercase tracking-wider mb-1">Your Final</span><span id="final-player-money" class="font-black text-emerald-400 text-lg">$0</span></div>
-                <div class="w-px bg-slate-700"></div>
-                <div class="flex flex-col"><span class="text-slate-500 text-[10px] font-black uppercase tracking-wider mb-1">Opponent</span><span id="final-npc-money" class="font-black text-red-400 text-lg">$0</span></div>
+            <div class="w-full bg-black/80 p-5 rounded-xl border border-gray-700 text-sm flex justify-around shadow-inner">
+                <div class="flex flex-col"><span class="text-gray-500 text-xs font-black uppercase tracking-widest mb-1">Your Final</span><span id="final-player-money" class="font-black text-emerald-400 text-2xl font-serif-title">$0</span></div>
+                <div class="w-px bg-gray-600"></div>
+                <div class="flex flex-col"><span class="text-gray-500 text-xs font-black uppercase tracking-widest mb-1">Opponent</span><span id="final-npc-money" class="font-black text-red-500 text-2xl font-serif-title">$0</span></div>
             </div>
             
-            <button id="restart-match-btn" class="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black rounded-xl transition uppercase text-sm tracking-widest shadow-lg border border-yellow-300 mt-2">
+            <button id="restart-match-btn" class="w-full py-5 bg-gradient-to-r from-[#d4af37] to-[#8b6914] hover:brightness-110 text-white font-black rounded-xl transition uppercase text-base tracking-widest shadow-[0_10px_20px_rgba(212,175,55,0.4)] border border-[#fff7d6] mt-3">
                 RETURN TO MENU
             </button>
         </div>
@@ -602,12 +614,12 @@
 
             // 2. Main Outer Metallic Rim
             const rimGrad = ctx.createLinearGradient(-radius, -radius, radius, radius);
-            rimGrad.addColorStop(0, '#555'); rimGrad.addColorStop(0.3, '#ddd'); rimGrad.addColorStop(0.5, '#777'); rimGrad.addColorStop(1, '#222');
+            rimGrad.addColorStop(0, '#333'); rimGrad.addColorStop(0.3, '#aaa'); rimGrad.addColorStop(0.5, '#555'); rimGrad.addColorStop(1, '#111');
             ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fillStyle = rimGrad; ctx.fill();
 
             // 3. Wood / Dark Bowl Inner Shadow Effect
             const innerRadius = radius * 0.94;
-            ctx.beginPath(); ctx.arc(0, 0, innerRadius, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 0, innerRadius, 0, Math.PI * 2); ctx.fillStyle = '#0a0a0a'; ctx.fill();
 
             // Rotate for Pockets
             ctx.save();
@@ -621,11 +633,11 @@
                 // Creating deep pocket gradients
                 const pocketGrad = ctx.createRadialGradient(0, 0, innerRadius * 0.5, 0, 0, innerRadius);
                 if(RAW_WHEEL_SEQUENCE[i].color === 'green') {
-                    pocketGrad.addColorStop(0, '#047857'); pocketGrad.addColorStop(1, '#064e3b');
+                    pocketGrad.addColorStop(0, '#047857'); pocketGrad.addColorStop(1, '#022c22');
                 } else if(RAW_WHEEL_SEQUENCE[i].color === 'red') {
                     pocketGrad.addColorStop(0, '#b91c1c'); pocketGrad.addColorStop(1, '#450a0a');
                 } else {
-                    pocketGrad.addColorStop(0, '#334155'); pocketGrad.addColorStop(1, '#020617');
+                    pocketGrad.addColorStop(0, '#1e293b'); pocketGrad.addColorStop(1, '#020617');
                 }
 
                 ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, innerRadius, startAngle, endAngle);
@@ -634,64 +646,67 @@
                 // Draw Gold/Silver Metal Frets (separators)
                 ctx.beginPath(); ctx.moveTo(0, 0); 
                 ctx.lineTo(Math.cos(startAngle)*innerRadius, Math.sin(startAngle)*innerRadius);
-                ctx.lineWidth = 1.5; ctx.strokeStyle = '#fcd34d'; ctx.stroke();
+                ctx.lineWidth = 1.5; ctx.strokeStyle = '#d4af37'; ctx.stroke();
                 
                 // Add inner shadow bevels to frets
                 ctx.beginPath(); ctx.moveTo(0, 0); 
                 ctx.lineTo(Math.cos(startAngle)*innerRadius, Math.sin(startAngle)*innerRadius);
-                ctx.lineWidth = 0.5; ctx.strokeStyle = '#78350f'; ctx.stroke();
+                ctx.lineWidth = 0.5; ctx.strokeStyle = '#451a03'; ctx.stroke();
 
                 // Numbers
                 ctx.save(); ctx.rotate(startAngle + arcSize / 2);
                 ctx.textAlign = 'right'; ctx.fillStyle = '#ffffff'; 
-                ctx.shadowColor = '#000'; ctx.shadowBlur = 3;
+                ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
                 ctx.font = 'bold 12px Outfit, sans-serif';
-                ctx.fillText(RAW_WHEEL_SEQUENCE[i].num, innerRadius - 8, 4); 
+                ctx.fillText(RAW_WHEEL_SEQUENCE[i].num, innerRadius - 10, 4); 
                 ctx.restore();
             }
 
             // 5. 3D Center Turret
             const turretBase = radius * 0.55;
             // Base shadow
-            ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 10;
-            ctx.beginPath(); ctx.arc(0, 0, turretBase, 0, 2 * Math.PI); ctx.fillStyle = '#0f172a'; ctx.fill();
+            ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 12;
+            ctx.beginPath(); ctx.arc(0, 0, turretBase, 0, 2 * Math.PI); ctx.fillStyle = '#020617'; ctx.fill();
             ctx.shadowBlur = 0;
 
             // Turret layers
             const tGrad1 = ctx.createLinearGradient(-turretBase, -turretBase, turretBase, turretBase);
-            tGrad1.addColorStop(0, '#fef08a'); tGrad1.addColorStop(0.5, '#b45309'); tGrad1.addColorStop(1, '#78350f');
+            tGrad1.addColorStop(0, '#fef08a'); tGrad1.addColorStop(0.5, '#b45309'); tGrad1.addColorStop(1, '#451a03');
             ctx.beginPath(); ctx.arc(0, 0, turretBase, 0, 2 * Math.PI); ctx.fillStyle = tGrad1; ctx.fill();
 
             const tGrad2 = ctx.createLinearGradient(0, -turretBase, 0, turretBase);
-            tGrad2.addColorStop(0, '#334155'); tGrad2.addColorStop(1, '#0f172a');
+            tGrad2.addColorStop(0, '#1e293b'); tGrad2.addColorStop(1, '#020617');
             ctx.beginPath(); ctx.arc(0, 0, turretBase * 0.8, 0, 2 * Math.PI); ctx.fillStyle = tGrad2; ctx.fill();
             
             // Center gold spinner
             ctx.beginPath(); ctx.arc(0, 0, turretBase * 0.3, 0, 2 * Math.PI); ctx.fillStyle = tGrad1; ctx.fill();
 
-            ctx.restore(); // Undo wheel rotation for ball placement
+            // POP the wRotation save!
+            ctx.restore(); 
 
             // 6. Realistic 3D Ball
             const ballRad = bAngle - (Math.PI / 2);
             const ballRadius = radius * currentBallRadiusRatio;
-            const ballX = centerX + Math.cos(ballRad) * ballRadius;
-            const ballY = centerY + Math.sin(ballRad) * ballRadius;
+            const ballX = Math.cos(ballRad) * ballRadius;
+            const ballY = Math.sin(ballRad) * ballRadius;
 
             // Drop Shadow reacting to position
-            ctx.shadowColor = 'rgba(0,0,0,0.8)';
-            ctx.shadowBlur = 6;
-            ctx.shadowOffsetX = Math.cos(ballRad) * -3;
-            ctx.shadowOffsetY = Math.sin(ballRad) * -3;
+            ctx.shadowColor = 'rgba(0,0,0,0.9)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = Math.cos(ballRad) * -4;
+            ctx.shadowOffsetY = Math.sin(ballRad) * -4;
             
-            ctx.beginPath(); ctx.arc(ballX, ballY, 6, 0, 2 * Math.PI); 
-            const ballGrad = ctx.createRadialGradient(ballX - 2, ballY - 2, 1, ballX, ballY, 6);
+            ctx.beginPath(); ctx.arc(ballX, ballY, 6.5, 0, 2 * Math.PI); 
+            const ballGrad = ctx.createRadialGradient(ballX - 2, ballY - 2, 1, ballX, ballY, 6.5);
             ballGrad.addColorStop(0, '#ffffff');
             ballGrad.addColorStop(0.7, '#cbd5e1');
-            ballGrad.addColorStop(1, '#475569');
+            ballGrad.addColorStop(1, '#334155');
             ctx.fillStyle = ballGrad; 
             ctx.fill();
             
             ctx.shadowColor = 'transparent'; // reset
+            
+            // Final pop of the original translate save!
             ctx.restore();
         }
         
@@ -757,11 +772,11 @@
         function updateShopButtons() {
             if(effects.lightning.owned) {
                 els.buyLight.textContent = activeEffect === 'lightning' ? 'EQUIPPED' : 'EQUIP';
-                els.buyLight.className = `shop-btn px-4 py-2.5 font-black rounded-xl text-xs uppercase min-w-[90px] shadow-md border ${activeEffect === 'lightning' ? 'bg-emerald-600 text-white border-emerald-400' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border-slate-500'}`;
+                els.buyLight.className = `shop-btn px-4 py-2.5 font-black rounded-xl text-xs uppercase min-w-[90px] shadow-md border ${activeEffect === 'lightning' ? 'bg-emerald-600 text-white border-emerald-400' : 'bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-500'}`;
             }
             if(effects.blackhole.owned) {
                 els.buyBlackhole.textContent = activeEffect === 'blackhole' ? 'EQUIPPED' : 'EQUIP';
-                els.buyBlackhole.className = `shop-btn px-4 py-2.5 font-black rounded-xl text-xs uppercase min-w-[90px] shadow-md border ${activeEffect === 'blackhole' ? 'bg-emerald-600 text-white border-emerald-400' : 'bg-slate-700 hover:bg-slate-600 text-slate-200 border-slate-500'}`;
+                els.buyBlackhole.className = `shop-btn px-4 py-2.5 font-black rounded-xl text-xs uppercase min-w-[90px] shadow-md border ${activeEffect === 'blackhole' ? 'bg-emerald-600 text-white border-emerald-400' : 'bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-500'}`;
             }
         }
 
@@ -787,16 +802,16 @@
         // --- Round & Time Setup ---
         els.roundBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                els.roundBtns.forEach(b => b.className = "round-btn px-2 py-1.5 rounded-lg bg-slate-800 text-[11px] font-bold text-slate-300 border border-slate-600 hover:border-yellow-500 transition");
-                btn.className = "round-btn px-2 py-1.5 rounded-lg bg-yellow-500 text-slate-950 text-[11px] font-black border border-yellow-400 transition";
+                els.roundBtns.forEach(b => b.className = "round-btn px-3 py-2 rounded-lg bg-gray-800 text-xs font-bold text-gray-300 border border-gray-600 hover:border-[#d4af37] transition");
+                btn.className = "round-btn px-3 py-2 rounded-lg bg-[#d4af37] text-black text-xs font-black border border-[#fff7d6] transition shadow-[0_0_15px_rgba(212,175,55,0.4)]";
                 TOTAL_ROUNDS = parseInt(btn.getAttribute('data-rounds'), 10);
             });
         });
         
         els.timeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                els.timeBtns.forEach(b => b.className = "time-btn px-2 py-1.5 rounded-lg bg-slate-800 text-[11px] font-bold text-slate-300 border border-slate-600 hover:border-yellow-500 transition");
-                btn.className = "time-btn px-2 py-1.5 rounded-lg bg-yellow-500 text-slate-950 text-[11px] font-black border border-yellow-400 transition";
+                els.timeBtns.forEach(b => b.className = "time-btn px-3 py-2 rounded-lg bg-gray-800 text-xs font-bold text-gray-300 border border-gray-600 hover:border-[#d4af37] transition");
+                btn.className = "time-btn px-3 py-2 rounded-lg bg-[#d4af37] text-black text-xs font-black border border-[#fff7d6] transition shadow-[0_0_15px_rgba(212,175,55,0.4)]";
                 TOTAL_TIME = parseInt(btn.getAttribute('data-time'), 10);
             });
         });
@@ -844,7 +859,7 @@
 
         // --- PeerJS Multiplayer Implementation (Fixed Fallback & Unblocking) ---
         
-        // Use a minimal config that avoids getting blocked by corporate NATs
+        // Use a robust config that punches through firewalls using STUN
         const peerConfig = {
             config: {
                 'iceServers': [
@@ -852,7 +867,7 @@
                     { urls: 'stun:global.stun.twilio.com:3478' }
                 ]
             },
-            debug: 1 // Lowered debug level to prevent console spam
+            debug: 0
         };
 
         const generateRoomCode = () => Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -865,10 +880,10 @@
             const mpTimeout = setTimeout(() => {
                 if(!peer || !peer.id) {
                     els.createMpBtn.textContent = "Create MP Game";
-                    alert("Network blocked or timed out. Check firewall/adblocker.");
+                    alert("Network blocked or timed out. Please try again.");
                     if(peer) peer.destroy();
                 }
-            }, 6000);
+            }, 8000);
 
             peer.on('open', (id) => {
                 clearTimeout(mpTimeout);
@@ -940,6 +955,7 @@
         });
 
         function startMPGame(rounds, time) {
+            // Guarantee modals close for BOTH players
             els.oppModal.classList.add('hidden');
             els.mpWaitModal.classList.add('hidden');
             els.joinMpBtn.textContent = "Join";
@@ -978,7 +994,7 @@
                     startMPGame(data.rounds, data.time);
                 }
                 if(data.type === 'SPIN') {
-                    // Update UI immediately to show friend's bet
+                    // Update UI immediately to show friend's bet on our screen
                     els.nBetTag.textContent = `$${data.amount} on ${data.color.toUpperCase()}`;
                     startSpinSequence(activeTurn === 'player' ? 'npc' : 'player', data.color, data.amount, data.pocketIndex);
                 }
@@ -1024,16 +1040,16 @@
         function updateTurnIndicators() {
             if (activeTurn === 'player') {
                 els.pCard.classList.add('active-turn-ring'); els.nCard.classList.remove('active-turn-ring');
-                els.pStatus.className = "text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-600/40 px-2.5 py-1 rounded font-black uppercase animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.2)]";
+                els.pStatus.className = "text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-600/40 px-3 py-1 rounded font-black uppercase animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.2)]";
                 els.pStatus.textContent = "YOUR TURN";
-                els.nStatus.className = "text-[10px] bg-slate-800/80 border border-transparent px-2.5 py-1 rounded-lg text-slate-400 font-bold uppercase shadow-inner";
+                els.nStatus.className = "text-[10px] bg-black/60 border border-transparent px-3 py-1 rounded-lg text-gray-500 font-bold uppercase shadow-inner";
                 els.nStatus.textContent = "WAITING";
                 els.betControls.classList.remove('opacity-40', 'pointer-events-none');
             } else {
                 els.nCard.classList.add('active-turn-ring'); els.pCard.classList.remove('active-turn-ring');
-                els.nStatus.className = "text-[10px] bg-amber-950 text-amber-400 border border-amber-600/40 px-2.5 py-1 rounded font-black uppercase animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.2)]";
+                els.nStatus.className = "text-[10px] bg-amber-950 text-[#d4af37] border border-[#d4af37]/60 px-3 py-1 rounded font-black uppercase animate-pulse shadow-[0_0_15px_rgba(212,175,55,0.4)]";
                 els.nStatus.textContent = isMultiplayer ? "FRIEND'S TURN" : "NPC TURN";
-                els.pStatus.className = "text-[10px] bg-slate-800/80 border border-transparent px-2.5 py-1 rounded-lg text-slate-400 font-bold uppercase shadow-inner";
+                els.pStatus.className = "text-[10px] bg-black/60 border border-transparent px-3 py-1 rounded-lg text-gray-500 font-bold uppercase shadow-inner";
                 els.pStatus.textContent = "WAITING";
                 els.betControls.classList.add('opacity-40', 'pointer-events-none');
             }
@@ -1057,8 +1073,8 @@
             btn.addEventListener('click', () => {
                 if (isSpinning || !matchActive || activeTurn !== 'player') return;
                 sound.init();
-                els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-yellow-400'); b.querySelector('.bet-indicator').classList.add('hidden'); });
-                btn.classList.add('ring-4', 'ring-yellow-400'); btn.querySelector('.bet-indicator').classList.remove('hidden');
+                els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-[#d4af37]'); b.querySelector('.bet-indicator').classList.add('hidden'); });
+                btn.classList.add('ring-4', 'ring-[#d4af37]'); btn.querySelector('.bet-indicator').classList.remove('hidden');
                 selectedColor = btn.getAttribute('data-color');
                 els.pBetTag.textContent = `$${betAmount} on ${selectedColor.toUpperCase()}`;
                 validateBet();
@@ -1167,7 +1183,7 @@
             requestAnimationFrame(animateSpin);
         }
 
-        // Apply Local State Loss/Win Updates Fix
+        // Apply Local State Loss/Win Updates instantly
         function resolveTurn(who, color, amount, pocket) {
             const isWin = (color === pocket.color);
             const multiplier = (color === 'green') ? 25 : 2;
@@ -1214,34 +1230,34 @@
         function showTurnModal(who, isWin, pocket, bet, profit) {
             if (who === 'player') {
                 if (isWin) {
-                    els.turnIcon.className = "w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-emerald-500/20 text-emerald-400 border border-emerald-500/50";
+                    els.turnIcon.className = "w-20 h-20 rounded-full flex items-center justify-center text-4xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500/50";
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
-                    els.turnTitle.textContent = "YOU WON!"; els.turnTitle.className = "font-serif-title text-2xl font-black mb-2 tracking-wide text-emerald-400";
+                    els.turnTitle.textContent = "YOU WON!"; els.turnTitle.className = "font-serif-title text-3xl font-black mb-2 tracking-widest text-emerald-400 drop-shadow-md";
                     els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
-                    els.turnAmt.textContent = `+$${(profit - bet).toLocaleString()} Net Profit`; els.turnAmt.className = "text-3xl font-black text-emerald-400 drop-shadow-md";
+                    els.turnAmt.textContent = `+$${(profit - bet).toLocaleString()} Net Profit`; els.turnAmt.className = "text-4xl font-black text-emerald-400 drop-shadow-lg";
                     confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
                 } else {
-                    els.turnIcon.className = "w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-red-500/20 text-red-400 border border-red-500/50";
+                    els.turnIcon.className = "w-20 h-20 rounded-full flex items-center justify-center text-4xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-red-500/20 text-red-500 border-2 border-red-500/50";
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-skull"></i>';
-                    els.turnTitle.textContent = "YOU LOST!"; els.turnTitle.className = "font-serif-title text-2xl font-black mb-2 tracking-wide text-red-500";
+                    els.turnTitle.textContent = "YOU LOST!"; els.turnTitle.className = "font-serif-title text-3xl font-black mb-2 tracking-widest text-red-500 drop-shadow-md";
                     els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
-                    els.turnAmt.textContent = `-$${bet.toLocaleString()}`; els.turnAmt.className = "text-3xl font-black text-red-400 drop-shadow-md";
+                    els.turnAmt.textContent = `-$${bet.toLocaleString()}`; els.turnAmt.className = "text-4xl font-black text-red-500 drop-shadow-lg";
                 }
                 els.turnModalBtn.textContent = isMultiplayer ? "CONTINUE TO FRIEND" : `CONTINUE TO ${currentNPC.name.toUpperCase()}`;
             } else {
                 const oppName = isMultiplayer ? "FRIEND" : currentNPC.name.toUpperCase();
                 if (isWin) {
-                    els.turnIcon.className = "w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-red-500/20 text-red-400 border border-red-500/50";
+                    els.turnIcon.className = "w-20 h-20 rounded-full flex items-center justify-center text-4xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-red-500/20 text-red-500 border-2 border-red-500/50";
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-robot"></i>';
-                    els.turnTitle.textContent = `${oppName} WON!`; els.turnTitle.className = "font-serif-title text-2xl font-black mb-2 tracking-wide text-amber-400";
+                    els.turnTitle.textContent = `${oppName} WON!`; els.turnTitle.className = "font-serif-title text-3xl font-black mb-2 tracking-widest text-[#d4af37] drop-shadow-md";
                     els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
-                    els.turnAmt.textContent = `+$${(profit - bet).toLocaleString()} Net Profit`; els.turnAmt.className = "text-3xl font-black text-amber-400 drop-shadow-md";
+                    els.turnAmt.textContent = `+$${(profit - bet).toLocaleString()} Net Profit`; els.turnAmt.className = "text-4xl font-black text-[#d4af37] drop-shadow-lg";
                 } else {
-                    els.turnIcon.className = "w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-emerald-500/20 text-emerald-400 border border-emerald-500/50";
+                    els.turnIcon.className = "w-20 h-20 rounded-full flex items-center justify-center text-4xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500/50";
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-face-smile"></i>';
-                    els.turnTitle.textContent = `${oppName} LOST!`; els.turnTitle.className = "font-serif-title text-2xl font-black mb-2 tracking-wide text-slate-300";
+                    els.turnTitle.textContent = `${oppName} LOST!`; els.turnTitle.className = "font-serif-title text-3xl font-black mb-2 tracking-widest text-gray-300 drop-shadow-md";
                     els.turnDesc.textContent = `Missed the bet!`;
-                    els.turnAmt.textContent = `-$${bet.toLocaleString()}`; els.turnAmt.className = "text-3xl font-black text-slate-400 drop-shadow-md";
+                    els.turnAmt.textContent = `-$${bet.toLocaleString()}`; els.turnAmt.className = "text-4xl font-black text-gray-400 drop-shadow-lg";
                 }
                 els.turnModalBtn.textContent = "CONTINUE TO YOUR TURN";
             }
@@ -1272,7 +1288,7 @@
                 } else {
                     activeTurn = 'player'; currentRound++;
                     if (currentRound > TOTAL_ROUNDS) { endMatch("Match Rounds Complete!"); return; }
-                    els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-yellow-400'); b.querySelector('.bet-indicator').classList.add('hidden'); });
+                    els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-[#d4af37]'); b.querySelector('.bet-indicator').classList.add('hidden'); });
                     selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
                     updateTurnIndicators(); updateUI();
                 }
@@ -1280,7 +1296,7 @@
                 // In MP, Host has ALREADY handled incrementing the turn and sending the SYNC packet.
                 // Guest will receive it passively. All we do on button click is clean up the local UI.
                 if (currentRound > TOTAL_ROUNDS) { endMatch("Match Rounds Complete!"); return; }
-                els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-yellow-400'); b.querySelector('.bet-indicator').classList.add('hidden'); });
+                els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-[#d4af37]'); b.querySelector('.bet-indicator').classList.add('hidden'); });
                 selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
                 updateTurnIndicators(); updateUI();
             }
@@ -1298,9 +1314,9 @@
             const oppName = isMultiplayer ? "Friend" : currentNPC.name;
 
             if (playerWon) {
-                iconContainer.className = "w-24 h-24 rounded-full flex items-center justify-center text-5xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] bg-emerald-500/20 text-emerald-400 border border-emerald-500/50";
+                iconContainer.className = "w-28 h-28 rounded-full flex items-center justify-center text-6xl shadow-[0_15px_40px_rgba(0,0,0,0.8)] bg-emerald-500/20 text-emerald-400 border-4 border-emerald-500/50";
                 iconContainer.innerHTML = '<i class="fa-solid fa-trophy"></i>';
-                title.textContent = "VICTORY!"; title.className = "font-serif-title text-3xl font-black mb-2 tracking-widest text-emerald-400";
+                title.textContent = "VICTORY!"; title.className = "font-serif-title text-4xl font-black mb-3 tracking-widest text-emerald-400 drop-shadow-md";
                 desc.textContent = `${reason} You beat the ${oppName}!`;
 
                 globalBankroll += 100; updateUI();
@@ -1329,14 +1345,14 @@
                 }
                 confetti({ particleCount: 130, spread: 90, origin: { y: 0.6 } });
             } else if (isTie) {
-                iconContainer.className = "w-24 h-24 rounded-full flex items-center justify-center text-5xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] bg-yellow-500/20 text-yellow-400 border border-yellow-500/50";
+                iconContainer.className = "w-28 h-28 rounded-full flex items-center justify-center text-6xl shadow-[0_15px_40px_rgba(0,0,0,0.8)] bg-yellow-500/20 text-[#d4af37] border-4 border-[#d4af37]/50";
                 iconContainer.innerHTML = '<i class="fa-solid fa-handshake"></i>';
-                title.textContent = "IT'S A DRAW!"; title.className = "font-serif-title text-3xl font-black mb-2 tracking-widest text-yellow-400";
+                title.textContent = "IT'S A DRAW!"; title.className = "font-serif-title text-4xl font-black mb-3 tracking-widest text-[#d4af37] drop-shadow-md";
                 desc.textContent = `${reason} You and ${oppName} tied!`;
             } else {
-                iconContainer.className = "w-24 h-24 rounded-full flex items-center justify-center text-5xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] bg-red-500/20 text-red-400 border border-red-500/50";
+                iconContainer.className = "w-28 h-28 rounded-full flex items-center justify-center text-6xl shadow-[0_15px_40px_rgba(0,0,0,0.8)] bg-red-500/20 text-red-500 border-4 border-red-500/50";
                 iconContainer.innerHTML = '<i class="fa-solid fa-skull"></i>';
-                title.textContent = "DEFEAT!"; title.className = "font-serif-title text-3xl font-black mb-2 tracking-widest text-red-500";
+                title.textContent = "DEFEAT!"; title.className = "font-serif-title text-4xl font-black mb-3 tracking-widest text-red-500 drop-shadow-md";
                 desc.textContent = `${reason} ${oppName} won with more cash!`;
             }
             showGameOverModal();
@@ -1364,9 +1380,9 @@
 
         function addHistoryBadge(pocket) {
             const badge = document.createElement('div');
-            badge.className = `w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold border shadow-sm ${
-                pocket.color === 'green' ? 'bg-emerald-600 text-white border-emerald-400' :
-                pocket.color === 'red' ? 'bg-red-600 text-white border-red-400' : 'bg-slate-900 text-slate-200 border-slate-700'
+            badge.className = `w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-black border-2 shadow-[0_2px_5px_rgba(0,0,0,0.8)] ${
+                pocket.color === 'green' ? 'bg-emerald-700 text-white border-emerald-400' :
+                pocket.color === 'red' ? 'bg-red-800 text-white border-red-400' : 'bg-slate-900 text-gray-200 border-gray-500'
             }`;
             badge.textContent = pocket.label;
             els.histContainer.insertBefore(badge, els.histContainer.firstChild);
@@ -1375,7 +1391,7 @@
 
         els.soundToggle.addEventListener('click', () => {
             soundEnabled = !soundEnabled;
-            document.getElementById('sound-icon').className = soundEnabled ? 'fa-solid fa-volume-high text-base' : 'fa-solid fa-volume-xmark text-base text-slate-500';
+            document.getElementById('sound-icon').className = soundEnabled ? 'fa-solid fa-volume-high text-lg' : 'fa-solid fa-volume-xmark text-lg text-gray-500';
         });
 
     </script>
