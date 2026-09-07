@@ -533,9 +533,10 @@
         function drawWheel(wRotation = 0, bAngle = 0, currentBallRadiusRatio = 0.82) {
             const width = canvas.getBoundingClientRect().width;
             const height = canvas.getBoundingClientRect().height;
+            if (width <= 0 || height <= 0) return;
             const centerX = width / 2;
             const centerY = height / 2;
-            const radius = Math.min(width, height) / 2 - 8;
+            const radius = Math.max(10, Math.min(width, height) / 2 - 8);
 
             ctx.clearRect(0, 0, width, height);
             const arcSize = (2 * Math.PI) / POCKET_COUNT;
@@ -701,9 +702,8 @@
             updateTurnIndicators(); updateUI(); startMatchTimer();
         }
 
-        // --- PeerJS Multiplayer Implementation (Fixed Handshake & Menu Hide) ---
+        // --- PeerJS Multiplayer Implementation ---
         
-        // PeerJS Config using Google STUN servers to guarantee connectivity across devices/NATs
         const peerConfig = {
             config: {
                 'iceServers': [
@@ -803,7 +803,8 @@
                     startMPGame(data.rounds);
                 }
                 if(data.type === 'SPIN') {
-                    startSpinSequence(activeTurn === 'player' ? 'npc' : 'player', data.color, data.amount, data.pocketIndex);
+                    // Always show as the opponent's spin from the receiver's perspective
+                    startSpinSequence('npc', data.color, data.amount, data.pocketIndex);
                 }
                 if(data.type === 'SYNC') {
                     playerBalance = isHost ? data.hostBal : data.guestBal;
@@ -935,7 +936,7 @@
 
         function startSpinSequence(who, color, amount, forcedPocketIndex = null) {
             sound.init(); isSpinning = true; els.spinBtn.disabled = true;
-            els.spinTurnTxt.textContent = who === 'player' ? "Your Spin:" : (isMultiplayer ? "Friend Spin:" : `${currentNPC.name}'s Spin:`);
+            els.spinTurnTxt.textContent = who === 'player' ? "Your Spin:" : (isMultiplayer ? "Friend's Spin:" : `${currentNPC.name}'s Spin:`);
             els.spinBadge.classList.remove('hidden');
 
             const winningIndex = forcedPocketIndex !== null ? forcedPocketIndex : Math.floor(Math.random() * POCKET_COUNT);
@@ -989,11 +990,19 @@
             const multiplier = (color === 'green') ? 25 : 2;
             let netProfit = isWin ? amount * multiplier : 0;
 
+            // In multiplayer, Host dictates all state to avoid syncing desyncs
+            if(!isMultiplayer || isHost) {
+                if (who === 'player') {
+                    if (isWin) playerBalance += netProfit; else playerBalance -= amount;
+                } else {
+                    if (isWin) npcBalance += netProfit; else npcBalance -= amount;
+                }
+            }
+
+            // Everyone plays sound & updates UI purely locally
             if (who === 'player') {
-                if (isWin) playerBalance += netProfit; else playerBalance -= amount;
                 if(isWin) sound.playWin(color === 'green'); else sound.playLose();
             } else {
-                if (isWin) npcBalance += netProfit; else npcBalance -= amount;
                 if(isWin) sound.playLose(); else sound.playWin(true);
             }
 
@@ -1005,13 +1014,18 @@
                 let nextRnd = currentRound;
                 if(nextTurnStr === 'host') nextRnd++;
                 
+                // Immediately sync correct state to guest
                 conn.send({
                     type: 'SYNC',
-                    hostBal: isHost ? playerBalance : npcBalance,
-                    guestBal: isHost ? npcBalance : playerBalance,
+                    hostBal: playerBalance,
+                    guestBal: npcBalance,
                     round: nextRnd,
                     turn: nextTurnStr
                 });
+                
+                // Update host's internal state synchronously so it's ready when the modal closes
+                activeTurn = (nextTurnStr === 'host') ? 'player' : 'npc';
+                currentRound = nextRnd;
             }
         }
 
@@ -1063,10 +1077,10 @@
             if (playerBalance <= 0 || npcBalance <= 0) {
                 const loseTxt = isMultiplayer ? "Friend" : currentNPC.name;
                 const reason = npcBalance <= 0 ? `${loseTxt} Went Bankrupt!` : "You Went Bankrupt!";
-                if(isMultiplayer && conn) {
+                if(isMultiplayer && isHost && conn) {
                     conn.send({ type: 'FINISH', reason });
                 }
-                endMatch(reason);
+                if (!isMultiplayer || isHost) endMatch(reason);
                 return;
             }
 
@@ -1081,7 +1095,9 @@
                     updateTurnIndicators(); updateUI();
                 }
             } else {
-                activeTurn = activeTurn === 'player' ? 'npc' : 'player';
+                // In MP, Host has ALREADY handled incrementing the turn and sending the SYNC packet.
+                // Guest will receive it passively. All we do on button click is clean up the local UI.
+                if (currentRound > TOTAL_ROUNDS) { endMatch("Match Rounds Complete!"); return; }
                 els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-yellow-400'); b.querySelector('.bet-indicator').classList.add('hidden'); });
                 selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
                 updateTurnIndicators(); updateUI();
