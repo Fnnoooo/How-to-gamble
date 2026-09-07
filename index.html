@@ -320,13 +320,13 @@
 
     <!-- MP Waiting Modal -->
     <div id="mp-waiting-modal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-lg flex items-center justify-center z-[60] hidden">
-        <div class="text-center flex flex-col items-center gap-6">
-            <i class="fa-solid fa-spinner fa-spin text-5xl text-blue-500"></i>
+        <div class="text-center flex flex-col items-center gap-6 max-w-sm w-full p-4">
+            <i id="mp-wait-icon" class="fa-solid fa-spinner fa-spin text-5xl text-blue-500"></i>
             <div>
-                <h2 class="font-serif-title text-2xl font-black text-white mb-2">WAITING FOR FRIEND</h2>
-                <p class="text-slate-400">Give your friend this Room Code to join:</p>
+                <h2 id="mp-wait-title" class="font-serif-title text-2xl font-black text-white mb-2">CONNECTING...</h2>
+                <p id="mp-wait-desc" class="text-slate-400 text-xs">Establishing connection to multiplayer server...</p>
             </div>
-            <div class="bg-slate-900 border-2 border-blue-500 px-8 py-4 rounded-2xl">
+            <div id="mp-code-box" class="hidden bg-slate-900 border-2 border-blue-500 px-8 py-4 rounded-2xl">
                 <span id="waiting-room-code" class="text-3xl font-black text-blue-400 tracking-widest font-mono">---</span>
             </div>
             <button id="cancel-mp-btn" class="text-slate-500 hover:text-white underline text-sm mt-4">Cancel Room</button>
@@ -697,26 +697,52 @@
         }
 
         const peerConfig = {
+            host: '0.peerjs.com',
+            port: 443,
+            secure: true,
             config: {
                 'iceServers': [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
                 ]
             }
         };
 
         els.createMpBtn.addEventListener('click', () => {
             els.createMpBtn.textContent = "CREATING...";
-            // Generate robust unique room code to prevent collisions on desktop and mobile browsers
+            els.oppModal.classList.add('hidden');
+            els.mpWaitModal.classList.remove('hidden');
+            
+            // Reset modal state and start spinner immediately
+            document.getElementById('mp-wait-icon').className = "fa-solid fa-spinner fa-spin text-5xl text-blue-500";
+            document.getElementById('mp-wait-title').textContent = "CONNECTING...";
+            document.getElementById('mp-wait-desc').textContent = "Establishing connection to multiplayer server...";
+            document.getElementById('mp-code-box').classList.add('hidden');
+
             const shortCode = 'ROU-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-            peer = new Peer(shortCode, peerConfig);
+            
+            let connectionTimeout = setTimeout(() => {
+                if(peer && !peer.disconnected && !peer.destroyed && peer.id) return;
+                handlePeerError("Connection timed out. Public PeerJS server may be blocked by your network or ad-blocker.");
+            }, 8000);
+
+            try {
+                peer = new Peer(shortCode, peerConfig);
+            } catch(e) {
+                handlePeerError("Failed to initialize PeerJS: " + e.message);
+                return;
+            }
 
             peer.on('open', (id) => {
+                clearTimeout(connectionTimeout);
                 isHost = true;
                 els.createMpBtn.textContent = "Create MP Game";
-                els.oppModal.classList.add('hidden');
+                document.getElementById('mp-wait-icon').className = "fa-solid fa-circle-check text-5xl text-emerald-400";
+                document.getElementById('mp-wait-title').textContent = "WAITING FOR FRIEND";
+                document.getElementById('mp-wait-desc').textContent = "Give your friend this Room Code to join:";
+                document.getElementById('mp-code-box').classList.remove('hidden');
                 els.waitCode.textContent = id;
-                els.mpWaitModal.classList.remove('hidden');
             });
 
             peer.on('connection', (incomingConn) => {
@@ -726,12 +752,19 @@
             });
 
             peer.on('error', (err) => {
-                els.createMpBtn.textContent = "Create MP Game";
-                // If ID collision occurs, retry automatically or alert
-                const retryCode = 'ROU-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-                console.warn("Retrying with new ID due to collision:", err);
+                clearTimeout(connectionTimeout);
+                handlePeerError("PeerJS Error: " + (err.type || err.message || err));
             });
         });
+
+        function handlePeerError(msg) {
+            if(peer) { try { peer.destroy(); } catch(e){} peer = null; }
+            els.createMpBtn.textContent = "Create MP Game";
+            document.getElementById('mp-wait-icon').className = "fa-solid fa-triangle-exclamation text-5xl text-amber-500";
+            document.getElementById('mp-wait-title').textContent = "CONNECTION FAILED";
+            document.getElementById('mp-wait-desc').textContent = msg + " (Note: PC ad-blockers or strict firewalls can block WebRTC/PeerJS signaling servers).";
+            document.getElementById('mp-code-box').classList.add('hidden');
+        }
 
         els.joinMpBtn.addEventListener('click', () => {
             const code = els.joinMpInput.value.trim().toUpperCase();
