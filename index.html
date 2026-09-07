@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Arena: Multiplayer & Effects</title>
+    <title>Roulette Arena: 3D Enhanced & MP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <!-- PeerJS for WebRTC Multiplayer -->
@@ -39,6 +39,7 @@
             -webkit-text-fill-color: transparent;
         }
 
+        /* Knockout Effect Animations */
         .lightning-strike-anim { animation: strike-sequence 1s ease-in-out infinite; }
         @keyframes strike-sequence {
             0% { opacity: 0; }
@@ -175,25 +176,24 @@
                 <div class="w-full h-full rounded-full animate-bh-pulse" style="background: radial-gradient(circle, #000000 30%, #4c1d95 60%, transparent 80%); box-shadow: 0 0 100px #7e22ce, inset 0 0 50px #000;"></div>
             </div>
 
-            <div id="wheel-wrapper" class="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center rounded-full transition-all duration-300">
-                <div class="absolute inset-0 rounded-full border-8 border-yellow-600/80 shadow-[0_0_50px_rgba(0,0,0,0.8)] bg-gradient-to-tr from-amber-950 via-slate-900 to-amber-900 p-2"></div>
-                <canvas id="roulette-canvas" class="w-full h-full rounded-full z-10 shadow-inner"></canvas>
-                <div class="absolute z-20 w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-300 via-amber-600 to-yellow-800 rounded-full border-4 border-yellow-200 shadow-xl flex items-center justify-center pointer-events-none">
-                    <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-slate-950 border border-yellow-400/50 flex items-center justify-center">
-                        <i class="fa-solid fa-gem text-xs text-yellow-400"></i>
-                    </div>
-                </div>
+            <!-- Enhanced Realistic 3D Wheel Wrapper -->
+            <div id="wheel-wrapper" class="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center rounded-full transition-all duration-300" style="box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.9);">
+                <!-- Beautiful Metallic Base Layer -->
+                <div class="absolute inset-0 rounded-full border-[10px] border-yellow-700/60 shadow-[inset_0_0_20px_#000] bg-gradient-to-br from-[#1c1917] via-[#020617] to-[#1c1917] p-2" style="border-style: ridge; border-color: #854d0e #fcd34d #a16207 #fef08a;"></div>
+                
+                <canvas id="roulette-canvas" class="w-full h-full rounded-full z-10" style="box-shadow: inset 0 0 40px rgba(0,0,0,1);"></canvas>
+                
                 <div class="absolute -top-3 z-30 flex flex-col items-center">
-                    <div class="text-yellow-400 text-xl sm:text-3xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"><i class="fa-solid fa-caret-down"></i></div>
+                    <div class="text-yellow-400 text-2xl sm:text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]" style="transform: scaleY(1.2);"><i class="fa-solid fa-caret-down"></i></div>
                 </div>
                 <div id="spin-badge" class="hidden absolute top-6 z-30 bg-slate-900/95 text-yellow-400 px-4 py-1.5 rounded-full font-mono text-sm border border-yellow-500/40 shadow-lg animate-bounce">
                     <i class="fa-solid fa-spinner fa-spin mr-2"></i><span id="spinner-turn-text">Your Turn:</span> <span id="countdown-timer">5.0</span>s
                 </div>
             </div>
 
-            <div class="w-full max-w-xs mt-3 flex items-center justify-center gap-2">
+            <div class="w-full max-w-xs mt-4 flex items-center justify-center gap-2 bg-slate-900/80 p-2 rounded-xl border border-slate-700/50 shadow-inner">
                 <span class="text-xs text-slate-400 uppercase font-semibold mr-1">History:</span>
-                <div id="history-container" class="flex gap-1.5 overflow-x-auto py-1 px-2 max-w-[220px]"></div>
+                <div id="history-container" class="flex gap-1.5 overflow-x-auto max-w-[220px]"></div>
             </div>
         </div>
 
@@ -243,26 +243,38 @@
     </main>
 
     <!-- Match Setup Modal -->
-    <div id="opponent-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
-        <div class="glass-panel gold-border p-6 rounded-3xl max-w-lg w-full text-center flex flex-col gap-4">
+    <div id="opponent-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="glass-panel gold-border p-6 rounded-3xl max-w-lg w-full text-center flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
             <div>
-                <h2 class="font-serif-title text-2xl sm:text-3xl font-black gold-gradient-text mb-1">NEW MATCH</h2>
+                <h2 class="font-serif-title text-2xl sm:text-3xl font-black gold-gradient-text mb-1">CHOOSE YOUR OPPONENT</h2>
                 <p class="text-slate-400 text-xs sm:text-sm">Your Bankroll: <span id="modal-bankroll" class="text-emerald-400 font-bold">$100</span></p>
             </div>
 
-            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
-                <span class="text-xs uppercase font-bold text-slate-400">Match Rounds:</span>
-                <div class="flex gap-1.5" id="round-selector">
-                    <button data-rounds="5" class="round-btn px-3 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition">5</button>
-                    <button data-rounds="10" class="round-btn px-3 py-1 rounded-xl bg-yellow-500 text-slate-950 text-xs font-black border border-yellow-400 transition">10</button>
-                    <button data-rounds="15" class="round-btn px-3 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition">15</button>
-                    <button data-rounds="20" class="round-btn px-3 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition">20</button>
+            <!-- Configuration Selectors -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex flex-col gap-2 items-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400">Match Rounds:</span>
+                    <div class="flex gap-1.5" id="round-selector">
+                        <button data-rounds="5" class="round-btn px-2 py-1 rounded-lg bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition">5</button>
+                        <button data-rounds="10" class="round-btn px-2 py-1 rounded-lg bg-yellow-500 text-slate-950 text-[10px] font-black border border-yellow-400 transition">10</button>
+                        <button data-rounds="15" class="round-btn px-2 py-1 rounded-lg bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition">15</button>
+                        <button data-rounds="20" class="round-btn px-2 py-1 rounded-lg bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition">20</button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex flex-col gap-2 items-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400">Time Limit:</span>
+                    <div class="flex gap-1.5" id="time-selector">
+                        <button data-time="60" class="time-btn px-2 py-1 rounded-lg bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition">1M</button>
+                        <button data-time="180" class="time-btn px-2 py-1 rounded-lg bg-yellow-500 text-slate-950 text-[10px] font-black border border-yellow-400 transition">3M</button>
+                        <button data-time="300" class="time-btn px-2 py-1 rounded-lg bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition">5M</button>
+                    </div>
                 </div>
             </div>
 
             <!-- Multiplayer Section -->
-            <div class="p-4 rounded-2xl border border-blue-500/30 bg-blue-950/30 flex flex-col gap-3">
-                <h3 class="text-sm font-bold text-blue-400 uppercase tracking-widest text-left">Multiplayer (Play with Friend)</h3>
+            <div class="p-3 rounded-2xl border border-blue-500/30 bg-blue-950/30 flex flex-col gap-2">
+                <h3 class="text-xs font-bold text-blue-400 uppercase tracking-widest text-left">Multiplayer (Play with Friend)</h3>
                 <div class="flex gap-2">
                     <button id="create-mp-btn" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs uppercase transition shadow-lg">
                         Create MP Game
@@ -277,8 +289,9 @@
             </div>
 
             <!-- Single Player NPC List -->
-            <div class="grid grid-cols-1 gap-2 text-left max-h-[30vh] overflow-y-auto pr-1">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2 mb-1">Single Player (vs AI)</h3>
+            <div class="grid grid-cols-1 gap-2 text-left max-h-[35vh] overflow-y-auto pr-1">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 mb-0.5">Single Player (vs AI)</h3>
+                
                 <button data-npc="0" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
                     <div class="w-10 h-10 rounded-full bg-blue-900/60 border border-blue-400 flex items-center justify-center text-lg text-blue-300">👦</div>
                     <div class="flex-1">
@@ -286,28 +299,56 @@
                         <p class="text-[11px] text-slate-400">Low bets ($10-$50). Rarely bets Green.</p>
                     </div>
                 </button>
+                
                 <button data-npc="1" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-full bg-teal-900/60 border border-teal-400 flex items-center justify-center text-lg text-teal-300">👴</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">Cautious Carl</h3><span class="text-[9px] bg-teal-900/50 text-teal-300 px-2 py-0.5 rounded">EASY</span></div>
+                        <p class="text-[11px] text-slate-400">Only bets Red or Black. Never bets big.</p>
+                    </div>
+                </button>
+
+                <button data-npc="2" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
                     <div class="w-10 h-10 rounded-full bg-purple-900/60 border border-purple-400 flex items-center justify-center text-lg text-purple-300">👩‍💼</div>
                     <div class="flex-1">
                         <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">High-Roller Hannah</h3><span class="text-[9px] bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded">MEDIUM</span></div>
                         <p class="text-[11px] text-slate-400">Aggressive gambler. Hunts Green 25x often.</p>
                     </div>
                 </button>
-                <button data-npc="2" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
+
+                <button data-npc="3" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
                     <div class="w-10 h-10 rounded-full bg-red-900/60 border border-red-400 flex items-center justify-center text-lg text-red-300">🤖</div>
                     <div class="flex-1">
                         <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">Gamble-Bot 3000</h3><span class="text-[9px] bg-red-900/50 text-red-300 px-2 py-0.5 rounded">HARD</span></div>
                         <p class="text-[11px] text-slate-400">Calculates your score and goes all-in if behind.</p>
                     </div>
                 </button>
-                <button data-npc="3" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
+
+                <button data-npc="4" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-full bg-pink-900/60 border border-pink-400 flex items-center justify-center text-lg text-pink-300">💃</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">Risk-Taker Ruby</h3><span class="text-[9px] bg-pink-900/50 text-pink-300 px-2 py-0.5 rounded">HARD</span></div>
+                        <p class="text-[11px] text-slate-400">Crazy bets. Will drop everything on Green randomly.</p>
+                    </div>
+                </button>
+
+                <button data-npc="5" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
                     <div class="w-10 h-10 rounded-full bg-emerald-900/60 border border-emerald-400 flex items-center justify-center text-lg text-emerald-300">🍀</div>
                     <div class="flex-1">
                         <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">Lucky Luke</h3><span class="text-[9px] bg-emerald-900/50 text-emerald-300 px-2 py-0.5 rounded">EXPERT</span></div>
                         <p class="text-[11px] text-slate-400">Has uncanny luck hitting green pockets.</p>
                     </div>
                 </button>
-                <button data-npc="4" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
+
+                <button data-npc="6" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-400 flex items-center justify-center text-lg text-gray-300">👻</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">The Phantom</h3><span class="text-[9px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded">MASTER</span></div>
+                        <p class="text-[11px] text-slate-400">Plays perfectly and drains your balance.</p>
+                    </div>
+                </button>
+
+                <button data-npc="7" class="npc-select-btn p-3 rounded-2xl border border-slate-700 bg-slate-900/80 hover:border-yellow-500/60 hover:bg-slate-800 transition flex items-center gap-3 group">
                     <div class="w-10 h-10 rounded-full bg-amber-900/60 border border-amber-400 flex items-center justify-center text-lg text-amber-300">👑</div>
                     <div class="flex-1">
                         <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-slate-200 group-hover:text-yellow-400">The Grandmaster</h3><span class="text-[9px] bg-amber-900/50 text-amber-300 px-2 py-0.5 rounded">MASTER</span></div>
@@ -347,7 +388,6 @@
             </div>
 
             <div class="grid grid-cols-1 gap-3 text-left">
-                <!-- Blue Lightning Effect -->
                 <div class="p-3.5 rounded-2xl border border-slate-700 bg-slate-900/90 flex items-center gap-3">
                     <div class="w-11 h-11 rounded-xl bg-blue-600/30 border border-blue-400 flex items-center justify-center text-xl text-blue-400">⚡</div>
                     <div class="flex-1">
@@ -359,7 +399,6 @@
                     </button>
                 </div>
 
-                <!-- Black Hole Effect -->
                 <div class="p-3.5 rounded-2xl border border-slate-700 bg-slate-900/90 flex items-center gap-3">
                     <div class="w-11 h-11 rounded-xl bg-purple-600/30 border border-purple-400 flex items-center justify-center text-xl text-purple-400">🌌</div>
                     <div class="flex-1">
@@ -412,7 +451,7 @@
 
     <!-- Main Logic & PeerJS Multiplayer Engine -->
     <script>
-        // Sound Engine
+        // --- Sound Engine ---
         class SoundController {
             constructor() { this.ctx = null; }
             init() {
@@ -473,7 +512,7 @@
         let isMultiplayer = false;
         let isHost = false;
 
-        // Core Game State
+        // --- Core Game State ---
         let globalBankroll = 100; 
         let playerBalance = 100;
         let npcBalance = 100;
@@ -484,6 +523,7 @@
         let isSpinning = false;
         let currentRound = 1;
         let TOTAL_ROUNDS = 10; 
+        let TOTAL_TIME = 180;
         let matchTimerSeconds = 180;
         let timerInterval = null;
         let matchActive = false;
@@ -491,16 +531,20 @@
         let effects = { lightning: { owned: false }, blackhole: { owned: false } };
         let activeEffect = null; 
 
+        // Expanded 8 NPC Roster
         const NPC_LIST = [
             { name: "Rookie Rick", icon: "👦", risk: "low", greenProbability: 0.05 },
+            { name: "Cautious Carl", icon: "👴", risk: "low", greenProbability: 0.01 },
             { name: "High-Roller Hannah", icon: "👩‍💼", risk: "high", greenProbability: 0.20 },
             { name: "Gamble-Bot 3000", icon: "🤖", risk: "smart", greenProbability: 0.15 },
+            { name: "Risk-Taker Ruby", icon: "💃", risk: "high", greenProbability: 0.25 },
             { name: "Lucky Luke", icon: "🍀", risk: "high", greenProbability: 0.30 },
+            { name: "The Phantom", icon: "👻", risk: "smart", greenProbability: 0.20 },
             { name: "The Grandmaster", icon: "👑", risk: "smart", greenProbability: 0.25 }
         ];
         let currentNPC = NPC_LIST[0];
 
-        // Wheel Setup
+        // --- Highly Realistic 3D Canvas Board Setup ---
         const canvas = document.getElementById('roulette-canvas');
         const ctx = canvas.getContext('2d');
         const RAW_WHEEL_SEQUENCE = [
@@ -533,40 +577,115 @@
         function drawWheel(wRotation = 0, bAngle = 0, currentBallRadiusRatio = 0.82) {
             const width = canvas.getBoundingClientRect().width;
             const height = canvas.getBoundingClientRect().height;
-            if (width <= 0 || height <= 0) return;
             const centerX = width / 2;
             const centerY = height / 2;
-            const radius = Math.max(10, Math.min(width, height) / 2 - 8);
+            const radius = Math.min(width, height) / 2 - 8;
 
             ctx.clearRect(0, 0, width, height);
             const arcSize = (2 * Math.PI) / POCKET_COUNT;
 
-            ctx.save(); ctx.translate(centerX, centerY);
+            ctx.save(); 
+            ctx.translate(centerX, centerY);
 
+            // 1. Base Shadow for Depth
+            ctx.shadowColor = 'rgba(0,0,0,0.8)';
+            ctx.shadowBlur = 15;
+            ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // 2. Main Outer Metallic Rim
+            const rimGrad = ctx.createLinearGradient(-radius, -radius, radius, radius);
+            rimGrad.addColorStop(0, '#555'); rimGrad.addColorStop(0.3, '#ddd'); rimGrad.addColorStop(0.5, '#777'); rimGrad.addColorStop(1, '#222');
+            ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fillStyle = rimGrad; ctx.fill();
+
+            // 3. Wood / Dark Bowl Inner Shadow Effect
+            const innerRadius = radius * 0.94;
+            ctx.beginPath(); ctx.arc(0, 0, innerRadius, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
+
+            // Rotate for Pockets
+            ctx.save();
+            ctx.rotate(wRotation);
+
+            // 4. Draw 3D Pockets
             for (let i = 0; i < POCKET_COUNT; i++) {
-                const startAngle = wRotation + (i * arcSize) - (Math.PI / 2) - (arcSize / 2);
+                const startAngle = (i * arcSize) - (Math.PI / 2) - (arcSize / 2);
                 const endAngle = startAngle + arcSize;
-                ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, radius, startAngle, endAngle);
-                ctx.fillStyle = RAW_WHEEL_SEQUENCE[i].code; ctx.fill();
-                ctx.lineWidth = 1.2; ctx.strokeStyle = '#d97706'; ctx.stroke();
 
+                // Creating deep pocket gradients
+                const pocketGrad = ctx.createRadialGradient(0, 0, innerRadius * 0.5, 0, 0, innerRadius);
+                if(RAW_WHEEL_SEQUENCE[i].color === 'green') {
+                    pocketGrad.addColorStop(0, '#047857'); pocketGrad.addColorStop(1, '#064e3b');
+                } else if(RAW_WHEEL_SEQUENCE[i].color === 'red') {
+                    pocketGrad.addColorStop(0, '#b91c1c'); pocketGrad.addColorStop(1, '#450a0a');
+                } else {
+                    pocketGrad.addColorStop(0, '#334155'); pocketGrad.addColorStop(1, '#020617');
+                }
+
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, innerRadius, startAngle, endAngle);
+                ctx.fillStyle = pocketGrad; ctx.fill();
+
+                // Draw Gold/Silver Metal Frets (separators)
+                ctx.beginPath(); ctx.moveTo(0, 0); 
+                ctx.lineTo(Math.cos(startAngle)*innerRadius, Math.sin(startAngle)*innerRadius);
+                ctx.lineWidth = 1.5; ctx.strokeStyle = '#fcd34d'; ctx.stroke();
+                
+                // Add inner shadow bevels to frets
+                ctx.beginPath(); ctx.moveTo(0, 0); 
+                ctx.lineTo(Math.cos(startAngle)*innerRadius, Math.sin(startAngle)*innerRadius);
+                ctx.lineWidth = 0.5; ctx.strokeStyle = '#78350f'; ctx.stroke();
+
+                // Numbers
                 ctx.save(); ctx.rotate(startAngle + arcSize / 2);
-                ctx.textAlign = 'right'; ctx.fillStyle = '#ffffff'; ctx.font = 'bold 11px Outfit, sans-serif';
-                ctx.fillText(RAW_WHEEL_SEQUENCE[i].num, radius - 8, 3.5); ctx.restore();
+                ctx.textAlign = 'right'; ctx.fillStyle = '#ffffff'; 
+                ctx.shadowColor = '#000'; ctx.shadowBlur = 3;
+                ctx.font = 'bold 12px Outfit, sans-serif';
+                ctx.fillText(RAW_WHEEL_SEQUENCE[i].num, innerRadius - 8, 4); 
+                ctx.restore();
             }
 
-            ctx.beginPath(); ctx.arc(0, 0, radius * 0.55, 0, 2 * Math.PI);
-            ctx.fillStyle = '#0f172a'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#eab308'; ctx.stroke();
-            ctx.restore();
+            // 5. 3D Center Turret
+            const turretBase = radius * 0.55;
+            // Base shadow
+            ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 10;
+            ctx.beginPath(); ctx.arc(0, 0, turretBase, 0, 2 * Math.PI); ctx.fillStyle = '#0f172a'; ctx.fill();
+            ctx.shadowBlur = 0;
 
+            // Turret layers
+            const tGrad1 = ctx.createLinearGradient(-turretBase, -turretBase, turretBase, turretBase);
+            tGrad1.addColorStop(0, '#fef08a'); tGrad1.addColorStop(0.5, '#b45309'); tGrad1.addColorStop(1, '#78350f');
+            ctx.beginPath(); ctx.arc(0, 0, turretBase, 0, 2 * Math.PI); ctx.fillStyle = tGrad1; ctx.fill();
+
+            const tGrad2 = ctx.createLinearGradient(0, -turretBase, 0, turretBase);
+            tGrad2.addColorStop(0, '#334155'); tGrad2.addColorStop(1, '#0f172a');
+            ctx.beginPath(); ctx.arc(0, 0, turretBase * 0.8, 0, 2 * Math.PI); ctx.fillStyle = tGrad2; ctx.fill();
+            
+            // Center gold spinner
+            ctx.beginPath(); ctx.arc(0, 0, turretBase * 0.3, 0, 2 * Math.PI); ctx.fillStyle = tGrad1; ctx.fill();
+
+            ctx.restore(); // Undo wheel rotation for ball placement
+
+            // 6. Realistic 3D Ball
             const ballRad = bAngle - (Math.PI / 2);
             const ballRadius = radius * currentBallRadiusRatio;
             const ballX = centerX + Math.cos(ballRad) * ballRadius;
             const ballY = centerY + Math.sin(ballRad) * ballRadius;
 
-            ctx.beginPath(); ctx.arc(ballX + 2, ballY + 2, 6, 0, 2 * Math.PI); ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; ctx.fill();
-            ctx.beginPath(); ctx.arc(ballX, ballY, 6, 0, 2 * Math.PI); ctx.fillStyle = '#ffffff'; ctx.fill();
-            ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.stroke();
+            // Drop Shadow reacting to position
+            ctx.shadowColor = 'rgba(0,0,0,0.8)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = Math.cos(ballRad) * -3;
+            ctx.shadowOffsetY = Math.sin(ballRad) * -3;
+            
+            ctx.beginPath(); ctx.arc(ballX, ballY, 6, 0, 2 * Math.PI); 
+            const ballGrad = ctx.createRadialGradient(ballX - 2, ballY - 2, 1, ballX, ballY, 6);
+            ballGrad.addColorStop(0, '#ffffff');
+            ballGrad.addColorStop(0.7, '#cbd5e1');
+            ballGrad.addColorStop(1, '#475569');
+            ctx.fillStyle = ballGrad; 
+            ctx.fill();
+            
+            ctx.shadowColor = 'transparent'; // reset
+            ctx.restore();
         }
         setTimeout(resizeCanvas, 50);
 
@@ -578,6 +697,7 @@
             buyLight: document.getElementById('buy-lightning-btn'),
             buyBlackhole: document.getElementById('buy-blackhole-btn'),
             roundBtns: document.querySelectorAll('.round-btn'),
+            timeBtns: document.querySelectorAll('.time-btn'),
             npcSelects: document.querySelectorAll('.npc-select-btn'),
             createMpBtn: document.getElementById('create-mp-btn'),
             joinMpBtn: document.getElementById('join-mp-btn'),
@@ -655,12 +775,20 @@
             } else { sound.playLose(); }
         });
 
-        // --- Round Setup ---
+        // --- Round & Time Setup ---
         els.roundBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                els.roundBtns.forEach(b => b.className = "round-btn px-3 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition");
-                btn.className = "round-btn px-3 py-1 rounded-xl bg-yellow-500 text-slate-950 text-xs font-black border border-yellow-400 transition";
+                els.roundBtns.forEach(b => b.className = "round-btn px-2 py-1 rounded-lg bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition");
+                btn.className = "round-btn px-2 py-1 rounded-lg bg-yellow-500 text-slate-950 text-[10px] font-black border border-yellow-400 transition";
                 TOTAL_ROUNDS = parseInt(btn.getAttribute('data-rounds'), 10);
+            });
+        });
+        
+        els.timeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                els.timeBtns.forEach(b => b.className = "time-btn px-2 py-1 rounded-lg bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition");
+                btn.className = "time-btn px-2 py-1 rounded-lg bg-yellow-500 text-slate-950 text-[10px] font-black border border-yellow-400 transition";
+                TOTAL_TIME = parseInt(btn.getAttribute('data-time'), 10);
             });
         });
 
@@ -687,13 +815,15 @@
 
         function startSPMatch(npc) {
             isMultiplayer = false; currentNPC = npc;
-            playerBalance = 100; npcBalance = 100;
-            currentRound = 1; matchTimerSeconds = 180;
+            playerBalance = 100; npcBalance = 100; // Reset exactly to 100
+            currentRound = 1; matchTimerSeconds = TOTAL_TIME;
             matchActive = true; activeTurn = 'player'; selectedColor = null;
 
             resetBoard();
             els.npcName.innerHTML = `${npc.name} ${npc.icon}`;
             els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
+            els.pBetTag.textContent = "No Bet";
+            els.nBetTag.textContent = "No Bet";
             
             els.oppModal.classList.add('hidden');
             els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
@@ -702,15 +832,19 @@
             updateTurnIndicators(); updateUI(); startMatchTimer();
         }
 
-        // --- PeerJS Multiplayer Implementation ---
+        // --- Robust PeerJS Multiplayer Implementation ---
         
         const peerConfig = {
             config: {
                 'iceServers': [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun4.l.google.com:19302' }
                 ]
-            }
+            },
+            debug: 2
         };
 
         els.createMpBtn.addEventListener('click', () => {
@@ -718,7 +852,17 @@
             const shortCode = 'ROU-' + Math.floor(1000 + Math.random() * 9000);
             peer = new Peer(shortCode, peerConfig);
 
+            // Timeout fallback
+            const mpTimeout = setTimeout(() => {
+                if(!peer || !peer.id) {
+                    els.createMpBtn.textContent = "Create MP Game";
+                    alert("Could not connect to PeerJS server. A firewall or adblocker may be blocking WebRTC.");
+                    if(peer) peer.destroy();
+                }
+            }, 8000);
+
             peer.on('open', (id) => {
+                clearTimeout(mpTimeout);
                 isHost = true;
                 els.createMpBtn.textContent = "Create MP Game";
                 els.oppModal.classList.add('hidden');
@@ -733,8 +877,9 @@
             });
 
             peer.on('error', (err) => {
+                clearTimeout(mpTimeout);
                 els.createMpBtn.textContent = "Create MP Game";
-                alert("Room creation error or code already taken. Try again.");
+                alert("Room creation error: " + err.type);
                 console.error(err);
             });
         });
@@ -746,13 +891,22 @@
             els.joinMpBtn.textContent = "JOINING...";
 
             peer = new Peer(peerConfig);
+            
+            const mpTimeout = setTimeout(() => {
+                els.joinMpBtn.textContent = "Join";
+                alert("Connection timed out.");
+                if(peer) peer.destroy();
+            }, 8000);
+
             peer.on('open', () => {
+                clearTimeout(mpTimeout);
                 conn = peer.connect(code);
                 setupConnection();
                 isHost = false;
 
                 conn.on('open', () => {
-                    // Send ready signal to host once connection is fully established
+                    els.joinMpBtn.textContent = "Join";
+                    // Send ready signal to host
                     conn.send({ type: 'JOIN_READY' });
                 });
 
@@ -762,8 +916,9 @@
                 });
             });
             peer.on('error', (err) => {
+                clearTimeout(mpTimeout);
                 els.joinMpBtn.textContent = "Join";
-                alert("Could not connect to room. Check code.");
+                alert("Error connecting: " + err.type);
             });
         });
 
@@ -773,18 +928,26 @@
             els.oppModal.classList.remove('hidden');
         });
 
-        function startMPGame(rounds) {
-            // Guarantee modals close for BOTH players
+        function startMPGame(rounds, time) {
             els.oppModal.classList.add('hidden');
             els.mpWaitModal.classList.add('hidden');
             els.joinMpBtn.textContent = "Join";
             
             isMultiplayer = true; matchActive = true;
-            TOTAL_ROUNDS = rounds; matchTimerSeconds = 180;
+            TOTAL_ROUNDS = rounds; matchTimerSeconds = time || 180;
+            
+            // MUST RESET TO $100
+            playerBalance = 100;
+            npcBalance = 100;
+            currentRound = 1;
+
             resetBoard();
 
             els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> Friend`;
             els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
+            els.pBetTag.textContent = "No Bet";
+            els.nBetTag.textContent = "No Bet";
+            
             els.mpCodeDisp.textContent = isHost ? peer.id : conn.peer;
             els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
             els.mpDisplay.classList.remove('hidden');
@@ -796,21 +959,26 @@
         function setupConnection() {
             conn.on('data', (data) => {
                 if(data.type === 'JOIN_READY' && isHost) {
-                    conn.send({ type: 'START', rounds: TOTAL_ROUNDS });
-                    startMPGame(TOTAL_ROUNDS);
+                    conn.send({ type: 'START', rounds: TOTAL_ROUNDS, time: TOTAL_TIME });
+                    startMPGame(TOTAL_ROUNDS, TOTAL_TIME);
                 }
                 if(data.type === 'START' && !isHost) {
-                    startMPGame(data.rounds);
+                    startMPGame(data.rounds, data.time);
                 }
                 if(data.type === 'SPIN') {
-                    // Always show as the opponent's spin from the receiver's perspective
-                    startSpinSequence('npc', data.color, data.amount, data.pocketIndex);
+                    // Update UI to show the exact bet the opponent made
+                    els.nBetTag.textContent = `$${data.amount} on ${data.color.toUpperCase()}`;
+                    startSpinSequence(activeTurn === 'player' ? 'npc' : 'player', data.color, data.amount, data.pocketIndex);
                 }
                 if(data.type === 'SYNC') {
                     playerBalance = isHost ? data.hostBal : data.guestBal;
                     npcBalance = isHost ? data.guestBal : data.hostBal;
                     currentRound = data.round;
                     activeTurn = data.turn === (isHost ? 'host' : 'guest') ? 'player' : 'npc';
+                    
+                    els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-yellow-400'); b.querySelector('.bet-indicator').classList.add('hidden'); });
+                    selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
+                    
                     updateUI(); updateTurnIndicators();
                 }
                 if(data.type === 'FINISH') {
@@ -916,6 +1084,8 @@
         els.spinBtn.addEventListener('click', () => {
             if (isSpinning || activeTurn !== 'player' || !selectedColor || betAmount > playerBalance) return;
             
+            els.pBetTag.textContent = `$${betAmount} on ${selectedColor.toUpperCase()}`;
+
             if(isMultiplayer && conn) {
                 const pIndex = Math.floor(Math.random() * POCKET_COUNT);
                 conn.send({ type: 'SPIN', color: selectedColor, amount: betAmount, pocketIndex: pIndex });
@@ -990,16 +1160,16 @@
             const multiplier = (color === 'green') ? 25 : 2;
             let netProfit = isWin ? amount * multiplier : 0;
 
-            // In multiplayer, Host dictates all state to avoid syncing desyncs
+            // Update Math logic silently 
             if(!isMultiplayer || isHost) {
                 if (who === 'player') {
-                    if (isWin) playerBalance += netProfit; else playerBalance -= amount;
+                    if (isWin) playerBalance += (netProfit - amount); else playerBalance -= amount;
                 } else {
-                    if (isWin) npcBalance += netProfit; else npcBalance -= amount;
+                    if (isWin) npcBalance += (netProfit - amount); else npcBalance -= amount;
                 }
             }
 
-            // Everyone plays sound & updates UI purely locally
+            // Everyone plays sound & updates UI locally
             if (who === 'player') {
                 if(isWin) sound.playWin(color === 'green'); else sound.playLose();
             } else {
@@ -1014,7 +1184,11 @@
                 let nextRnd = currentRound;
                 if(nextTurnStr === 'host') nextRnd++;
                 
-                // Immediately sync correct state to guest
+                // Keep local host correct
+                activeTurn = (nextTurnStr === 'host') ? 'player' : 'npc';
+                currentRound = nextRnd;
+
+                // Sync correct state to guest
                 conn.send({
                     type: 'SYNC',
                     hostBal: playerBalance,
@@ -1022,10 +1196,6 @@
                     round: nextRnd,
                     turn: nextTurnStr
                 });
-                
-                // Update host's internal state synchronously so it's ready when the modal closes
-                activeTurn = (nextTurnStr === 'host') ? 'player' : 'npc';
-                currentRound = nextRnd;
             }
         }
 
@@ -1036,7 +1206,7 @@
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
                     els.turnTitle.textContent = "YOU WON!"; els.turnTitle.className = "font-serif-title text-xl font-black mb-1 text-emerald-400";
                     els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
-                    els.turnAmt.textContent = `+$${profit.toLocaleString()} Profit`; els.turnAmt.className = "text-xl font-black text-emerald-400";
+                    els.turnAmt.textContent = `+$${(profit - bet).toLocaleString()} Net Profit`; els.turnAmt.className = "text-xl font-black text-emerald-400";
                     confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
                 } else {
                     els.turnIcon.className = "w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-xl bg-red-500/20 text-red-400 border border-red-500/50";
@@ -1053,7 +1223,7 @@
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-robot"></i>';
                     els.turnTitle.textContent = `${oppName} WON!`; els.turnTitle.className = "font-serif-title text-xl font-black mb-1 text-amber-400";
                     els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
-                    els.turnAmt.textContent = `+$${profit.toLocaleString()} Profit`; els.turnAmt.className = "text-xl font-black text-amber-400";
+                    els.turnAmt.textContent = `+$${(profit - bet).toLocaleString()} Profit`; els.turnAmt.className = "text-xl font-black text-amber-400";
                 } else {
                     els.turnIcon.className = "w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/50";
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-face-smile"></i>';
@@ -1095,12 +1265,14 @@
                     updateTurnIndicators(); updateUI();
                 }
             } else {
-                // In MP, Host has ALREADY handled incrementing the turn and sending the SYNC packet.
-                // Guest will receive it passively. All we do on button click is clean up the local UI.
+                // In MP, guest just cleans UI and waits for host sync
                 if (currentRound > TOTAL_ROUNDS) { endMatch("Match Rounds Complete!"); return; }
-                els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-yellow-400'); b.querySelector('.bet-indicator').classList.add('hidden'); });
-                selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
-                updateTurnIndicators(); updateUI();
+                
+                // If it's a guest playing, the state was already synced during resolveTurn by the host. 
+                // We just need to trigger the UI update.
+                if(!isHost) {
+                    updateTurnIndicators(); updateUI();
+                }
             }
         });
 
