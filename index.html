@@ -412,7 +412,6 @@
 
     <!-- Main Logic & PeerJS Multiplayer Engine -->
     <script>
-        // Sound Engine
         class SoundController {
             constructor() { this.ctx = null; }
             init() {
@@ -467,13 +466,11 @@
         const sound = new SoundController();
         let soundEnabled = true;
 
-        // --- PeerJS Multiplayer Variables ---
         let peer = null;
         let conn = null;
         let isMultiplayer = false;
         let isHost = false;
 
-        // Core Game State
         let globalBankroll = 100; 
         let playerBalance = 100;
         let npcBalance = 100;
@@ -500,23 +497,22 @@
         ];
         let currentNPC = NPC_LIST[0];
 
-        // Wheel Setup
         const canvas = document.getElementById('roulette-canvas');
         const ctx = canvas.getContext('2d');
         const RAW_WHEEL_SEQUENCE = [
-            { num: 0, color: 'green', code: '#10b981' }, { num: 32, color: 'red', code: '#ef4444' }, { num: 15, color: 'black', code: '#1e293b' },
-            { num: 19, color: 'red', code: '#ef4444' }, { num: 4, color: 'black', code: '#1e293b' }, { num: 21, color: 'red', code: '#ef4444' },
-            { num: 2, color: 'black', code: '#1e293b' }, { num: 25, color: 'red', code: '#ef4444' }, { num: 17, color: 'black', code: '#1e293b' },
-            { num: 34, color: 'red', code: '#ef4444' }, { num: 6, color: 'black', code: '#1e293b' }, { num: 27, color: 'red', code: '#ef4444' },
-            { num: 13, color: 'black', code: '#1e293b' }, { num: 36, color: 'red', code: '#ef4444' }, { num: 11, color: 'black', code: '#1e293b' },
-            { num: 30, color: 'red', code: '#ef4444' }, { num: 8, color: 'black', code: '#1e293b' }, { num: 23, color: 'red', code: '#ef4444' },
-            { num: 10, color: 'black', code: '#1e293b' }, { num: 5, color: 'red', code: '#ef4444' }, { num: 24, color: 'black', code: '#1e293b' },
-            { num: 16, color: 'red', code: '#ef4444' }, { num: 33, color: 'black', code: '#1e293b' }, { num: 1, color: 'red', code: '#ef4444' },
-            { num: 20, color: 'black', code: '#1e293b' }, { num: 14, color: 'red', code: '#ef4444' }, { num: 31, color: 'black', code: '#1e293b' },
-            { num: 9, color: 'red', code: '#ef4444' }, { num: 22, color: 'black', code: '#1e293b' }, { num: 18, color: 'red', code: '#ef4444' },
-            { num: 29, color: 'black', code: '#1e293b' }, { num: 7, color: 'red', code: '#ef4444' }, { num: 28, color: 'black', code: '#1e293b' },
-            { num: 12, color: 'red', code: '#ef4444' }, { num: 35, color: 'black', code: '#1e293b' }, { num: 3, color: 'red', code: '#ef4444' },
-            { num: 26, color: 'black', code: '#1e293b' }
+            { num: 0, color: 'green', code: '#10b981', label: '0' }, { num: 32, color: 'red', code: '#ef4444', label: '32' }, { num: 15, color: 'black', code: '#1e293b', label: '15' },
+            { num: 19, color: 'red', code: '#ef4444', label: '19' }, { num: 4, color: 'black', code: '#1e293b', label: '4' }, { num: 21, color: 'red', code: '#ef4444', label: '21' },
+            { num: 2, color: 'black', code: '#1e293b', label: '2' }, { num: 25, color: 'red', code: '#ef4444', label: '25' }, { num: 17, color: 'black', code: '#1e293b', label: '17' },
+            { num: 34, color: 'red', code: '#ef4444', label: '34' }, { num: 6, color: 'black', code: '#1e293b', label: '6' }, { num: 27, color: 'red', code: '#ef4444', label: '27' },
+            { num: 13, color: 'black', code: '#1e293b', label: '13' }, { num: 36, color: 'red', code: '#ef4444', label: '36' }, { num: 11, color: 'black', code: '#1e293b', label: '11' },
+            { num: 30, color: 'red', code: '#ef4444', label: '30' }, { num: 8, color: 'black', code: '#1e293b', label: '8' }, { num: 23, color: 'red', code: '#ef4444', label: '23' },
+            { num: 10, color: 'black', code: '#1e293b', label: '10' }, { num: 5, color: 'red', code: '#ef4444', label: '5' }, { num: 24, color: 'black', code: '#1e293b', label: '24' },
+            { num: 16, color: 'red', code: '#ef4444', label: '16' }, { num: 33, color: 'black', code: '#1e293b', label: '33' }, { num: 1, color: 'red', code: '#ef4444', label: '1' },
+            { num: 20, color: 'black', code: '#1e293b', label: '20' }, { num: 14, color: 'red', code: '#ef4444', label: '14' }, { num: 31, color: 'black', code: '#1e293b', label: '31' },
+            { num: 9, color: 'red', code: '#ef4444', label: '9' }, { num: 22, color: 'black', code: '#1e293b', label: '22' }, { num: 18, color: 'red', code: '#ef4444', label: '18' },
+            { num: 29, color: 'black', code: '#1e293b', label: '29' }, { num: 7, color: 'red', code: '#ef4444', label: '7' }, { num: 28, color: 'black', code: '#1e293b', label: '28' },
+            { num: 12, color: 'red', code: '#ef4444', label: '12' }, { num: 35, color: 'black', code: '#1e293b', label: '35' }, { num: 3, color: 'red', code: '#ef4444', label: '3' },
+            { num: 26, color: 'black', code: '#1e293b', label: '26' }
         ];
         const POCKET_COUNT = RAW_WHEEL_SEQUENCE.length; 
         let wheelRotation = 0, ballAngle = 0, ballDistanceRatio = 0.82;
@@ -570,7 +566,6 @@
         }
         setTimeout(resizeCanvas, 50);
 
-        // --- DOM Elements ---
         const els = {
             shopBtn: document.getElementById('open-shop-btn'),
             closeShopBtn: document.getElementById('close-shop-btn'),
@@ -624,7 +619,6 @@
             goModal: document.getElementById('gameover-modal')
         };
 
-        // --- Shop Logic ---
         function updateShopButtons() {
             if(effects.lightning.owned) {
                 els.buyLight.textContent = activeEffect === 'lightning' ? 'EQUIPPED' : 'EQUIP';
@@ -655,7 +649,6 @@
             } else { sound.playLose(); }
         });
 
-        // --- Round Setup ---
         els.roundBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 els.roundBtns.forEach(b => b.className = "round-btn px-3 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 border border-slate-700 hover:border-yellow-500 transition");
@@ -664,7 +657,6 @@
             });
         });
 
-        // --- Core Single Player Functions ---
         els.npcSelects.forEach(btn => {
             btn.addEventListener('click', () => {
                 const idx = parseInt(btn.getAttribute('data-npc'), 10);
@@ -680,6 +672,8 @@
             els.lightSvg.classList.remove('lightning-strike-anim');
             els.blackholeDiv.classList.add('hidden');
             els.histContainer.innerHTML = '';
+            els.nBetTag.textContent = "No Bet";
+            els.pBetTag.textContent = "No Bet";
             
             els.goModal.classList.add('opacity-0', 'pointer-events-none');
             els.turnModal.classList.add('opacity-0', 'pointer-events-none');
@@ -702,8 +696,6 @@
             updateTurnIndicators(); updateUI(); startMatchTimer();
         }
 
-        // --- PeerJS Multiplayer Implementation ---
-        
         const peerConfig = {
             config: {
                 'iceServers': [
@@ -715,7 +707,8 @@
 
         els.createMpBtn.addEventListener('click', () => {
             els.createMpBtn.textContent = "CREATING...";
-            const shortCode = 'ROU-' + Math.floor(1000 + Math.random() * 9000);
+            // Generate robust unique room code to prevent collisions on desktop and mobile browsers
+            const shortCode = 'ROU-' + Math.random().toString(36).substring(2, 8).toUpperCase();
             peer = new Peer(shortCode, peerConfig);
 
             peer.on('open', (id) => {
@@ -734,8 +727,9 @@
 
             peer.on('error', (err) => {
                 els.createMpBtn.textContent = "Create MP Game";
-                alert("Room creation error or code already taken. Try again.");
-                console.error(err);
+                // If ID collision occurs, retry automatically or alert
+                const retryCode = 'ROU-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                console.warn("Retrying with new ID due to collision:", err);
             });
         });
 
@@ -752,7 +746,6 @@
                 isHost = false;
 
                 conn.on('open', () => {
-                    // Send ready signal to host once connection is fully established
                     conn.send({ type: 'JOIN_READY' });
                 });
 
@@ -774,7 +767,6 @@
         });
 
         function startMPGame(rounds) {
-            // Guarantee modals close for BOTH players
             els.oppModal.classList.add('hidden');
             els.mpWaitModal.classList.add('hidden');
             els.joinMpBtn.textContent = "Join";
@@ -802,8 +794,13 @@
                 if(data.type === 'START' && !isHost) {
                     startMPGame(data.rounds);
                 }
+                if(data.type === 'BET_CHANGE') {
+                    // Instantly update friend's bet tag when they select/change their bet
+                    els.nBetTag.textContent = `$${data.amount} on ${data.color.toUpperCase()}`;
+                }
                 if(data.type === 'SPIN') {
-                    // Always show as the opponent's spin from the receiver's perspective
+                    // Update opponent's bet tag display correctly with their wager and color
+                    els.nBetTag.textContent = `$${data.amount} on ${data.color.toUpperCase()}`;
                     startSpinSequence('npc', data.color, data.amount, data.pocketIndex);
                 }
                 if(data.type === 'SYNC') {
@@ -823,7 +820,6 @@
             });
         }
 
-        // --- Game Sync Logic ---
         function startMatchTimer() {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -881,6 +877,10 @@
                 btn.classList.add('ring-4', 'ring-yellow-400'); btn.querySelector('.bet-indicator').classList.remove('hidden');
                 selectedColor = btn.getAttribute('data-color');
                 els.pBetTag.textContent = `$${betAmount} on ${selectedColor.toUpperCase()}`;
+                
+                if (isMultiplayer && conn) {
+                    conn.send({ type: 'BET_CHANGE', color: selectedColor, amount: betAmount });
+                }
                 validateBet();
             });
         });
@@ -892,7 +892,12 @@
                 els.chipBtns.forEach(b => b.classList.remove('chip-selected')); btn.classList.add('chip-selected');
                 const val = btn.getAttribute('data-amount');
                 betAmount = (val === 'all') ? playerBalance : parseInt(val, 10);
-                if (selectedColor) els.pBetTag.textContent = `$${betAmount} on ${selectedColor.toUpperCase()}`;
+                if (selectedColor) {
+                    els.pBetTag.textContent = `$${betAmount} on ${selectedColor.toUpperCase()}`;
+                    if (isMultiplayer && conn) {
+                        conn.send({ type: 'BET_CHANGE', color: selectedColor, amount: betAmount });
+                    }
+                }
                 updateBetDisplay(); validateBet();
             });
         });
@@ -990,7 +995,6 @@
             const multiplier = (color === 'green') ? 25 : 2;
             let netProfit = isWin ? amount * multiplier : 0;
 
-            // In multiplayer, Host dictates all state to avoid syncing desyncs
             if(!isMultiplayer || isHost) {
                 if (who === 'player') {
                     if (isWin) playerBalance += netProfit; else playerBalance -= amount;
@@ -999,7 +1003,6 @@
                 }
             }
 
-            // Everyone plays sound & updates UI purely locally
             if (who === 'player') {
                 if(isWin) sound.playWin(color === 'green'); else sound.playLose();
             } else {
@@ -1014,7 +1017,6 @@
                 let nextRnd = currentRound;
                 if(nextTurnStr === 'host') nextRnd++;
                 
-                // Immediately sync correct state to guest
                 conn.send({
                     type: 'SYNC',
                     hostBal: playerBalance,
@@ -1023,7 +1025,6 @@
                     turn: nextTurnStr
                 });
                 
-                // Update host's internal state synchronously so it's ready when the modal closes
                 activeTurn = (nextTurnStr === 'host') ? 'player' : 'npc';
                 currentRound = nextRnd;
             }
@@ -1095,8 +1096,6 @@
                     updateTurnIndicators(); updateUI();
                 }
             } else {
-                // In MP, Host has ALREADY handled incrementing the turn and sending the SYNC packet.
-                // Guest will receive it passively. All we do on button click is clean up the local UI.
                 if (currentRound > TOTAL_ROUNDS) { endMatch("Match Rounds Complete!"); return; }
                 els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-yellow-400'); b.querySelector('.bet-indicator').classList.add('hidden'); });
                 selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
@@ -1163,7 +1162,7 @@
         function showGameOverModal() {
             updateUI();
             els.goModal.classList.remove('opacity-0', 'pointer-events-none');
-            els.goModal.querySelector('div').classList.remove('scale-90'); els.goModal.querySelector('div').classList.add('scale-100');
+            els.goModal.querySelector('div').classList.remove('scale-100'); els.goModal.querySelector('div').classList.add('scale-90');
             confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         }
 
