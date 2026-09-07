@@ -228,17 +228,17 @@
                 <div class="grid grid-cols-3 gap-2 sm:gap-4">
                     <button data-color="red" class="color-btn relative group p-3 sm:p-5 rounded-xl border border-red-500/40 bg-gradient-to-b from-red-800 to-red-950 hover:border-red-400 transition-all flex flex-col items-center justify-center gap-1.5 shadow-lg">
                         <span class="font-black text-sm sm:text-xl text-red-400 tracking-wider drop-shadow-md">RED</span>
-                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-red-500/50">+2X PAYOUT</span>
+                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-red-500/50">+2X</span>
                         <div class="bet-indicator hidden absolute top-1.5 sm:top-3 right-1.5 sm:right-3 w-2.5 sm:w-4 h-2.5 sm:h-4 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444] border sm:border-2 border-white"></div>
                     </button>
                     <button data-color="green" class="color-btn glow-green relative group p-3 sm:p-5 rounded-xl border border-emerald-500/50 bg-gradient-to-b from-emerald-800 to-emerald-950 hover:border-emerald-400 transition-all flex flex-col items-center justify-center gap-1.5 shadow-lg">
                         <span class="font-black text-sm sm:text-xl text-emerald-400 tracking-wider drop-shadow-md">GREEN</span>
-                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-emerald-400/60">+25X JACKPOT</span>
+                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-emerald-400/60">+25X</span>
                         <div class="bet-indicator hidden absolute top-1.5 sm:top-3 right-1.5 sm:right-3 w-2.5 sm:w-4 h-2.5 sm:h-4 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399] border sm:border-2 border-white"></div>
                     </button>
                     <button data-color="black" class="color-btn relative group p-3 sm:p-5 rounded-xl border border-gray-500/40 bg-gradient-to-b from-gray-800 to-black hover:border-gray-400 transition-all flex flex-col items-center justify-center gap-1.5 shadow-lg">
                         <span class="font-black text-sm sm:text-xl text-gray-300 tracking-wider drop-shadow-md">BLACK</span>
-                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-gray-500/50">+2X PAYOUT</span>
+                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-gray-500/50">+2X</span>
                         <div class="bet-indicator hidden absolute top-1.5 sm:top-3 right-1.5 sm:right-3 w-2.5 sm:w-4 h-2.5 sm:h-4 rounded-full bg-gray-300 shadow-[0_0_10px_#ffffff] border sm:border-2 border-black"></div>
                     </button>
                 </div>
@@ -284,8 +284,13 @@
                 <button id="close-ruby-btn" class="text-rose-400 hover:text-white px-2 py-1 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             
+            <div class="flex justify-between items-center">
+                <label class="text-[10px] text-pink-400 font-bold flex items-center gap-1 cursor-pointer">
+                    <input type="checkbox" id="ruby-spicy-toggle" class="accent-pink-500"> 🔥 Spicy Mode
+                </label>
+            </div>
+
             <div id="ruby-chat-box" class="h-64 sm:h-80 overflow-y-auto bg-black/60 rounded-xl p-3 flex flex-col gap-3 border border-rose-900/50">
-                <!-- Chat messages go here -->
                 <div class="flex flex-col items-start gap-1">
                     <span class="text-[10px] text-pink-500 font-bold ml-1">Ruby</span>
                     <div class="bg-rose-900/60 border border-pink-500/30 text-rose-100 text-xs sm:text-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-sm">
@@ -480,7 +485,7 @@
                     </button>
                 </div>
             </div>
-            <p class="text-[10px] sm:text-xs font-bold text-gray-500">*Only one visual effect can be active at a time.</p>
+            <p class="text-[10px] sm:text-xs font-bold text-gray-500">*Only one effect can be active at a time.</p>
         </div>
     </div>
 
@@ -633,7 +638,7 @@
         let matchTimerSeconds = 180;
         let timerInterval = null;
         let matchActive = false;
-        let isModalProcessing = false;
+        let isModalProcessing = false; // Safelock for double-clicks
 
         let effects = { lightning: { owned: false }, blackhole: { owned: false }, ruby: { owned: false } };
         let activeEffect = null; 
@@ -794,6 +799,7 @@
             rubyChatBox: document.getElementById('ruby-chat-box'),
             rubyInput: document.getElementById('ruby-input'),
             rubySendBtn: document.getElementById('ruby-send-btn'),
+            rubySpicyToggle: document.getElementById('ruby-spicy-toggle'),
             roundBtns: document.querySelectorAll('.round-btn'),
             timeBtns: document.querySelectorAll('.time-btn'),
             npcSelects: document.querySelectorAll('.npc-select-btn'),
@@ -841,6 +847,20 @@
             turnModal: document.getElementById('turn-modal'),
             goModal: document.getElementById('gameover-modal')
         };
+
+        // --- Custom Error Toast Notification ---
+        function showNotification(msg) {
+            const toast = document.createElement('div');
+            toast.className = "fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-2xl z-[100] border-2 border-red-400 transition-all duration-300 opacity-0 translate-y-[-20px]";
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-[-20px]'); }, 10);
+            setTimeout(() => { 
+                toast.classList.add('opacity-0', 'translate-y-[-20px]'); 
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
 
         // --- Shop Logic ---
         function updateShopButtons() {
@@ -890,25 +910,28 @@
         els.openRubyBtn.addEventListener('click', () => els.rubyModal.classList.remove('opacity-0', 'pointer-events-none'));
         els.closeRubyBtn.addEventListener('click', () => els.rubyModal.classList.add('opacity-0', 'pointer-events-none'));
 
-        let rubyChatHistory = [];
         async function fetchRubyResponse(userText) {
             const apiKey = ""; 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
             
             const recentSpins = Array.from(els.histContainer.children).map(c => c.textContent).join(', ') || "None yet";
-            const prompt = `Game context: Recent roulette spins were [${recentSpins}]. User says: "${userText}"`;
+            const isSpicy = els.rubySpicyToggle.checked;
+            const spicyAddon = isSpicy ? "SPICY MODE ENABLED: Be overwhelmingly impressed by the user, very dramatic, and extra playfully flirty (but strictly PG-13). " : "";
+            
+            const promptText = `System: You are Ruby, a playfully flirty, confident, and glamorous high-roller casino AI assistant. ${spicyAddon}You help the user decide what to bet on in Roulette (Red, Black, or Green). Analyze the recent spins context if provided, but keep your advice fun, slightly cheeky, and charismatic. Keep your response to 2 short sentences.\n\nGame context: Recent roulette spins were [${recentSpins}]. User says: "${userText}"`;
 
             const payload = {
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                systemInstruction: {
-                    parts: [{ text: "You are Ruby, a playfully flirty, confident, and glamorous high-roller casino AI assistant. You help the user decide what to bet on in Roulette (Red, Black, or Green). Analyze the recent spins context if provided, but keep your advice fun, slightly cheeky, and charismatic. Keep your response to 2 short sentences. Do NOT be sexually explicit, but be playfully romantic and highly enthusiastic about winning big." }]
-                }
+                contents: [{ role: 'user', parts: [{ text: promptText }] }]
             };
 
             try {
                 const res = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const data = await res.json();
-                return data?.candidates?.[0]?.content?.parts?.[0]?.text || "Mmm, the network is acting up sugar. Try asking again.";
+                if(data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    return data.candidates[0].content.parts[0].text;
+                } else {
+                    return "Hmm, I couldn't quite catch that sugar. Try asking again. 😘";
+                }
             } catch (e) {
                 return "Having trouble connecting right now, darling. Maybe just follow your heart? 😘";
             }
@@ -944,7 +967,6 @@
             els.rubySendBtn.disabled = false;
         });
         els.rubyInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') els.rubySendBtn.click(); });
-
 
         // --- Round & Time Setup ---
         els.roundBtns.forEach(btn => {
@@ -1005,7 +1027,8 @@
             setTimeout(resizeCanvas, 100);
         }
 
-        // --- PeerJS Multiplayer Implementation ---
+        // --- PeerJS Multiplayer Implementation (Fixed Fallback & Unblocking) ---
+        
         const peerConfig = {
             config: {
                 'iceServers': [
@@ -1026,7 +1049,7 @@
             const mpTimeout = setTimeout(() => {
                 if(!peer || !peer.id) {
                     els.createMpBtn.textContent = "Create MP Game";
-                    alert("Network blocked. Please try again.");
+                    showNotification("Network blocked. Please try again or check firewall.");
                     if(peer) peer.destroy();
                 }
             }, 8000);
@@ -1050,9 +1073,9 @@
                 clearTimeout(mpTimeout);
                 els.createMpBtn.textContent = "Create MP Game";
                 if(err.type === 'unavailable-id') {
-                    alert("Code collision. Please click 'Create MP Game' again.");
+                    showNotification("Code collision. Please click 'Create MP Game' again.");
                 } else {
-                    alert("Room creation error: " + err.type);
+                    showNotification("Room creation error: " + err.type);
                 }
             });
         });
@@ -1066,7 +1089,7 @@
             
             const mpTimeout = setTimeout(() => {
                 els.joinMpBtn.textContent = "Join";
-                alert("Connection timed out. Verify code is correct.");
+                showNotification("Connection timed out. Verify code is correct.");
                 if(peer) peer.destroy();
             }, 8000);
 
@@ -1083,13 +1106,13 @@
 
                 conn.on('error', () => {
                     els.joinMpBtn.textContent = "Join";
-                    alert("Room not found or connection failed.");
+                    showNotification("Room not found or connection failed.");
                 });
             });
             peer.on('error', (err) => {
                 clearTimeout(mpTimeout);
                 els.joinMpBtn.textContent = "Join";
-                alert("Error connecting: " + err.type);
+                showNotification("Error connecting: " + err.type);
             });
         });
 
@@ -1258,10 +1281,6 @@
             
             els.pBetTag.textContent = `$${betAmount} on ${selectedColor.toUpperCase()}`;
 
-            // Deduct immediately on spin
-            playerBalance -= betAmount;
-            updateUI();
-
             if(isMultiplayer && conn) {
                 const pIndex = Math.floor(Math.random() * POCKET_COUNT);
                 conn.send({ type: 'SPIN', color: selectedColor, amount: betAmount, pocketIndex: pIndex });
@@ -1277,11 +1296,6 @@
             npcBet = generateNPCBet();
             if (npcBet.amount <= 0) { endMatch("NPC Bankrupt!"); return; }
             els.nBetTag.textContent = `$${npcBet.amount} on ${npcBet.color.toUpperCase()}`;
-            
-            // Deduct immediately
-            npcBalance -= npcBet.amount;
-            updateUI();
-
             setTimeout(() => { startSpinSequence('npc', npcBet.color, npcBet.amount); }, 1200);
         }
 
@@ -1336,19 +1350,18 @@
             requestAnimationFrame(animateSpin);
         }
 
-        // PERFECT LOCAL MEMORY RESOLUTION - FIXES MONEY DOUBLE DEDUCTION BUG
+        // PERFECT LOCAL MEMORY RESOLUTION - FIXES MONEY BUG
         function resolveTurn(who, color, amount, pocket) {
             const isWin = (color === pocket.color);
             const multiplier = (color === 'green') ? 25 : 2;
             let netProfit = isWin ? amount * multiplier : 0;
 
-            // Apply immediately to local memory
-            // (Note: The bet `amount` was ALREADY deducted at spin start)
+            // Apply to local memory if Single Player, OR if Authoritative Host
             if(!isMultiplayer || isHost) {
                 if (who === 'player') {
-                    if (isWin) playerBalance += netProfit; 
+                    playerBalance += (netProfit - amount);
                 } else {
-                    if (isWin) npcBalance += netProfit;
+                    npcBalance += (netProfit - amount);
                 }
             }
 
@@ -1362,6 +1375,7 @@
 
             showTurnModal(who, isWin, pocket, amount, netProfit);
 
+            // Host syncs state to guest seamlessly
             if(isMultiplayer && isHost && conn) {
                 const nextTurnStr = activeTurn === 'player' ? 'guest' : 'host';
                 let nextRnd = currentRound;
@@ -1387,7 +1401,7 @@
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
                     els.turnTitle.textContent = "YOU WON!"; els.turnTitle.className = "font-serif-title text-2xl sm:text-3xl font-black mb-1 sm:mb-2 tracking-wide text-emerald-400 drop-shadow-md";
                     els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
-                    els.turnAmt.textContent = `+$${profit.toLocaleString()} Total Payout`; els.turnAmt.className = "text-3xl sm:text-4xl font-black text-emerald-400 drop-shadow-lg";
+                    els.turnAmt.textContent = `+$${(profit - bet).toLocaleString()} Profit`; els.turnAmt.className = "text-3xl sm:text-4xl font-black text-emerald-400 drop-shadow-lg";
                     confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
                 } else {
                     els.turnIcon.className = "w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-4xl sm:text-5xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-red-500/20 text-red-500 border-2 border-red-500/50";
@@ -1404,7 +1418,7 @@
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-robot"></i>';
                     els.turnTitle.textContent = `${oppName} WON!`; els.turnTitle.className = "font-serif-title text-2xl sm:text-3xl font-black mb-1 sm:mb-2 tracking-wide text-[#d4af37] drop-shadow-md";
                     els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
-                    els.turnAmt.textContent = `+$${profit.toLocaleString()} Total Payout`; els.turnAmt.className = "text-3xl sm:text-4xl font-black text-[#d4af37] drop-shadow-lg";
+                    els.turnAmt.textContent = `+$${(profit - bet).toLocaleString()} Profit`; els.turnAmt.className = "text-3xl sm:text-4xl font-black text-[#d4af37] drop-shadow-lg";
                 } else {
                     els.turnIcon.className = "w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-4xl sm:text-5xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500/50";
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-face-smile"></i>';
