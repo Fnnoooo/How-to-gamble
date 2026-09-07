@@ -8,8 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <!-- PeerJS for WebRTC Multiplayer -->
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <!-- Three.js for 3D Realistic Roulette Wheel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Outfit:wght@300;400;600;700;900&display=swap');
@@ -519,182 +517,54 @@
         const POCKET_COUNT = RAW_WHEEL_SEQUENCE.length; 
         let wheelRotation = 0, ballAngle = 0, ballDistanceRatio = 0.82;
 
-        let scene, camera, renderer, wheelMesh, ballMesh, wheelGroup;
-        let textureCanvas, textureCtx, wheelTexture;
-        const canvas = document.getElementById('roulette-canvas');
-
-        function initThreeWheel() {
-            const container = document.getElementById('wheel-wrapper');
-            const width = container.clientWidth || 320;
-            const height = container.clientHeight || 320;
-
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-            camera.position.set(0, -6, 5.2);
-            camera.lookAt(0, 0, 0);
-
-            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-            renderer.setSize(width, height);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.shadowMap.enabled = true;
-
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
-            scene.add(ambientLight);
-
-            const dirLight = new THREE.DirectionalLight(0xfff5c0, 1.8);
-            dirLight.position.set(5, 10, 8);
-            scene.add(dirLight);
-
-            const pointLight = new THREE.PointLight(0xf1c40f, 2.5, 10);
-            pointLight.position.set(0, 0, 3);
-            scene.add(pointLight);
-
-            wheelGroup = new THREE.Group();
-            scene.add(wheelGroup);
-
-            textureCanvas = document.createElement('canvas');
-            textureCanvas.width = 1024;
-            textureCanvas.height = 1024;
-            textureCtx = textureCanvas.getContext('2d');
-            updateWheelTexture();
-
-            wheelTexture = new THREE.CanvasTexture(textureCanvas);
-            wheelTexture.anisotropy = 16;
-
-            const wheelGeo = new THREE.CylinderGeometry(2.2, 2.2, 0.25, 64);
-            const wheelMat = new THREE.MeshStandardMaterial({
-                map: wheelTexture,
-                roughness: 0.2,
-                metalness: 0.1
-            });
-            wheelMesh = new THREE.Mesh(wheelGeo, wheelMat);
-            wheelMesh.rotation.x = Math.PI / 2;
-            wheelGroup.add(wheelMesh);
-
-            const rimGeo = new THREE.CylinderGeometry(2.4, 2.5, 0.4, 64);
-            const rimMat = new THREE.MeshStandardMaterial({
-                color: 0x3d1c02,
-                roughness: 0.3,
-                metalness: 0.1
-            });
-            const rimMesh = new THREE.Mesh(rimGeo, rimMat);
-            rimMesh.rotation.x = Math.PI / 2;
-            wheelGroup.add(rimMesh);
-
-            const coneGeo = new THREE.ConeGeometry(0.6, 0.8, 32);
-            const coneMat = new THREE.MeshStandardMaterial({
-                color: 0xf1c40f,
-                metalness: 0.9,
-                roughness: 0.1
-            });
-            const coneMesh = new THREE.Mesh(coneGeo, coneMat);
-            coneMesh.rotation.x = Math.PI / 2;
-            coneMesh.position.z = 0.2;
-            wheelGroup.add(coneMesh);
-
-            const gemGeo = new THREE.OctahedronGeometry(0.2, 0);
-            const gemMat = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                metalness: 0.2,
-                roughness: 0.05,
-                transmission: 0.9,
-                ior: 2.4
-            });
-            const gemMesh = new THREE.Mesh(gemGeo, gemMat);
-            gemMesh.position.z = 0.6;
-            wheelGroup.add(gemMesh);
-
-            const ballGeo = new THREE.SphereGeometry(0.12, 32, 32);
-            const ballMat = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                roughness: 0.1,
-                metalness: 0.1
-            });
-            ballMesh = new THREE.Mesh(ballGeo, ballMat);
-            scene.add(ballMesh);
-        }
-
-        function updateWheelTexture() {
-            const ctx2d = textureCtx;
-            const size = 1024;
-            const center = size / 2;
-            ctx2d.clearRect(0, 0, size, size);
-
-            const arcSize = (2 * Math.PI) / POCKET_COUNT;
-            const outerRadius = size / 2 - 20;
-            const innerRadius = size * 0.25;
-
-            for (let i = 0; i < POCKET_COUNT; i++) {
-                const startAngle = (i * arcSize) - (Math.PI / 2) - (arcSize / 2);
-                const endAngle = startAngle + arcSize;
-
-                ctx2d.beginPath();
-                ctx2d.moveTo(center, center);
-                ctx2d.arc(center, center, outerRadius, startAngle, endAngle);
-                ctx2d.closePath();
-                ctx2d.fillStyle = RAW_WHEEL_SEQUENCE[i].code;
-                ctx2d.fill();
-                ctx2d.lineWidth = 4;
-                ctx2d.strokeStyle = '#d97706';
-                ctx2d.stroke();
-
-                ctx2d.save();
-                ctx2d.translate(center, center);
-                ctx2d.rotate(startAngle + arcSize / 2);
-                ctx2d.textAlign = 'right';
-                ctx2d.fillStyle = '#ffffff';
-                ctx2d.font = 'bold 36px Outfit, sans-serif';
-                ctx2d.fillText(RAW_WHEEL_SEQUENCE[i].num, outerRadius - 40, 12);
-                ctx2d.restore();
-            }
-
-            ctx2d.beginPath();
-            ctx2d.arc(center, center, innerRadius, 0, 2 * Math.PI);
-            ctx2d.fillStyle = '#0f172a';
-            ctx2d.fill();
-            ctx2d.lineWidth = 12;
-            ctx2d.strokeStyle = '#eab308';
-            ctx2d.stroke();
-        }
-
-        function drawWheel(wRotation = 0, bAngle = 0, currentBallRadiusRatio = 0.82) {
-            if (!renderer || !scene || !camera) return;
-
-            if (wheelGroup) {
-                wheelGroup.rotation.z = -wRotation;
-            }
-
-            if (ballMesh) {
-                const ballRad = bAngle - (Math.PI / 2);
-                const maxRadius = 1.9;
-                const minRadius = 0.9;
-                const ballRadius = minRadius + (maxRadius - minRadius) * currentBallRadiusRatio;
-                
-                ballMesh.position.x = Math.cos(ballRad) * ballRadius;
-                ballMesh.position.y = Math.sin(ballRad) * ballRadius;
-                ballMesh.position.z = 0.25 + (1 - currentBallRadiusRatio) * 0.4;
-            }
-
-            renderer.render(scene, camera);
-        }
-
         function resizeCanvas() {
-            const container = document.getElementById('wheel-wrapper');
-            if (!container || !renderer) return;
-            const width = container.clientWidth || 320;
-            const height = container.clientHeight || 320;
-
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-            renderer.setSize(width, height);
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
             drawWheel(wheelRotation, ballAngle, ballDistanceRatio);
         }
         window.addEventListener('resize', resizeCanvas);
 
-        setTimeout(() => {
-            initThreeWheel();
-            resizeCanvas();
-        }, 50);
+        function drawWheel(wRotation = 0, bAngle = 0, currentBallRadiusRatio = 0.82) {
+            const width = canvas.getBoundingClientRect().width;
+            const height = canvas.getBoundingClientRect().height;
+            if (width <= 0 || height <= 0) return;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.max(10, Math.min(width, height) / 2 - 8);
+
+            ctx.clearRect(0, 0, width, height);
+            const arcSize = (2 * Math.PI) / POCKET_COUNT;
+
+            ctx.save(); ctx.translate(centerX, centerY);
+
+            for (let i = 0; i < POCKET_COUNT; i++) {
+                const startAngle = wRotation + (i * arcSize) - (Math.PI / 2) - (arcSize / 2);
+                const endAngle = startAngle + arcSize;
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, radius, startAngle, endAngle);
+                ctx.fillStyle = RAW_WHEEL_SEQUENCE[i].code; ctx.fill();
+                ctx.lineWidth = 1.2; ctx.strokeStyle = '#d97706'; ctx.stroke();
+
+                ctx.save(); ctx.rotate(startAngle + arcSize / 2);
+                ctx.textAlign = 'right'; ctx.fillStyle = '#ffffff'; ctx.font = 'bold 11px Outfit, sans-serif';
+                ctx.fillText(RAW_WHEEL_SEQUENCE[i].num, radius - 8, 3.5); ctx.restore();
+            }
+
+            ctx.beginPath(); ctx.arc(0, 0, radius * 0.55, 0, 2 * Math.PI);
+            ctx.fillStyle = '#0f172a'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#eab308'; ctx.stroke();
+            ctx.restore();
+
+            const ballRad = bAngle - (Math.PI / 2);
+            const ballRadius = radius * currentBallRadiusRatio;
+            const ballX = centerX + Math.cos(ballRad) * ballRadius;
+            const ballY = centerY + Math.sin(ballRad) * ballRadius;
+
+            ctx.beginPath(); ctx.arc(ballX + 2, ballY + 2, 6, 0, 2 * Math.PI); ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; ctx.fill();
+            ctx.beginPath(); ctx.arc(ballX, ballY, 6, 0, 2 * Math.PI); ctx.fillStyle = '#ffffff'; ctx.fill();
+            ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        setTimeout(resizeCanvas, 50);
 
         const els = {
             shopBtn: document.getElementById('open-shop-btn'),
@@ -839,38 +709,33 @@
             }
         };
 
-        let fallbackMode = false;
-        let mockRoomCode = '';
-
         els.createMpBtn.addEventListener('click', () => {
             els.createMpBtn.textContent = "CREATING...";
             els.oppModal.classList.add('hidden');
             els.mpWaitModal.classList.remove('hidden');
             
+            // Reset modal state and start spinner immediately
             document.getElementById('mp-wait-icon').className = "fa-solid fa-spinner fa-spin text-5xl text-blue-500";
             document.getElementById('mp-wait-title').textContent = "CONNECTING...";
             document.getElementById('mp-wait-desc').textContent = "Establishing connection to multiplayer server...";
             document.getElementById('mp-code-box').classList.add('hidden');
 
             const shortCode = 'ROU-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-            mockRoomCode = shortCode;
             
             let connectionTimeout = setTimeout(() => {
-                // If PeerJS server fails or takes too long, seamlessly activate robust fallback multiplayer mode
-                activateFallbackRoom(shortCode, true);
-            }, 4000);
+                if(peer && !peer.disconnected && !peer.destroyed && peer.id) return;
+                handlePeerError("Connection timed out. Public PeerJS server may be blocked by your network or ad-blocker.");
+            }, 8000);
 
             try {
                 peer = new Peer(shortCode, peerConfig);
             } catch(e) {
-                clearTimeout(connectionTimeout);
-                activateFallbackRoom(shortCode, true);
+                handlePeerError("Failed to initialize PeerJS: " + e.message);
                 return;
             }
 
             peer.on('open', (id) => {
                 clearTimeout(connectionTimeout);
-                fallbackMode = false;
                 isHost = true;
                 els.createMpBtn.textContent = "Create MP Game";
                 document.getElementById('mp-wait-icon').className = "fa-solid fa-circle-check text-5xl text-emerald-400";
@@ -888,39 +753,17 @@
 
             peer.on('error', (err) => {
                 clearTimeout(connectionTimeout);
-                activateFallbackRoom(shortCode, true);
+                handlePeerError("PeerJS Error: " + (err.type || err.message || err));
             });
         });
-
-        function activateFallbackRoom(code, asHost) {
-            fallbackMode = true;
-            isHost = asHost;
-            document.getElementById('mp-wait-icon').className = "fa-solid fa-circle-check text-5xl text-emerald-400";
-            document.getElementById('mp-wait-title').textContent = asHost ? "ROOM CREATED (DIRECT MODE)" : "CONNECTED TO ROOM";
-            document.getElementById('mp-wait-desc').textContent = asHost ? "Room ready! Share code or play against simulated opponent:" : "Successfully joined room!";
-            document.getElementById('mp-code-box').classList.remove('hidden');
-            els.waitCode.textContent = code;
-            
-            // Auto start or let player click start
-            setTimeout(() => {
-                if(asHost) {
-                    // Provide a quick button to start with bot/friend simulation if no peer connects instantly
-                    document.getElementById('mp-wait-desc').innerHTML = `Room code: <b>${code}</b>. Click below to start match:`;
-                    const startBtn = document.createElement('button');
-                    startBtn.className = "mt-3 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase transition shadow-lg w-full";
-                    startBtn.textContent = "START MATCH NOW";
-                    startBtn.onclick = () => { startMPGame(TOTAL_ROUNDS); };
-                    document.querySelector('#mp-waiting-modal > div').appendChild(startBtn);
-                } else {
-                    startMPGame(TOTAL_ROUNDS);
-                }
-            }, 1000);
-        }
 
         function handlePeerError(msg) {
             if(peer) { try { peer.destroy(); } catch(e){} peer = null; }
             els.createMpBtn.textContent = "Create MP Game";
-            activateFallbackRoom(mockRoomCode || 'ROU-FAST', true);
+            document.getElementById('mp-wait-icon').className = "fa-solid fa-triangle-exclamation text-5xl text-amber-500";
+            document.getElementById('mp-wait-title').textContent = "CONNECTION FAILED";
+            document.getElementById('mp-wait-desc').textContent = msg + " (Note: PC ad-blockers or strict firewalls can block WebRTC/PeerJS signaling servers).";
+            document.getElementById('mp-code-box').classList.add('hidden');
         }
 
         els.joinMpBtn.addEventListener('click', () => {
@@ -929,27 +772,25 @@
 
             els.joinMpBtn.textContent = "JOINING...";
 
-            try {
-                peer = new Peer(peerConfig);
-                peer.on('open', () => {
-                    conn = peer.connect(code);
-                    setupConnection();
-                    isHost = false;
+            peer = new Peer(peerConfig);
+            peer.on('open', () => {
+                conn = peer.connect(code);
+                setupConnection();
+                isHost = false;
 
-                    conn.on('open', () => {
-                        conn.send({ type: 'JOIN_READY' });
-                    });
+                conn.on('open', () => {
+                    conn.send({ type: 'JOIN_READY' });
+                });
 
-                    conn.on('error', () => {
-                        activateFallbackRoom(code, false);
-                    });
+                conn.on('error', () => {
+                    els.joinMpBtn.textContent = "Join";
+                    alert("Room not found or connection failed.");
                 });
-                peer.on('error', (err) => {
-                    activateFallbackRoom(code, false);
-                });
-            } catch(e) {
-                activateFallbackRoom(code, false);
-            }
+            });
+            peer.on('error', (err) => {
+                els.joinMpBtn.textContent = "Join";
+                alert("Could not connect to room. Check code.");
+            });
         });
 
         els.cancelMpBtn.addEventListener('click', () => {
@@ -967,9 +808,9 @@
             TOTAL_ROUNDS = rounds; matchTimerSeconds = 180;
             resetBoard();
 
-            els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> ${fallbackMode ? 'Rival Player (Bot)' : 'Friend'}`;
+            els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> Friend`;
             els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
-            els.mpCodeDisp.textContent = mockRoomCode || (isHost ? peer?.id : conn?.peer) || 'ROU-FAST';
+            els.mpCodeDisp.textContent = isHost ? peer.id : conn.peer;
             els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
             els.mpDisplay.classList.remove('hidden');
 
@@ -978,7 +819,6 @@
         }
 
         function setupConnection() {
-            if(!conn) return;
             conn.on('data', (data) => {
                 if(data.type === 'JOIN_READY' && isHost) {
                     conn.send({ type: 'START', rounds: TOTAL_ROUNDS });
@@ -988,9 +828,11 @@
                     startMPGame(data.rounds);
                 }
                 if(data.type === 'BET_CHANGE') {
+                    // Instantly update friend's bet tag when they select/change their bet
                     els.nBetTag.textContent = `$${data.amount} on ${data.color.toUpperCase()}`;
                 }
                 if(data.type === 'SPIN') {
+                    // Update opponent's bet tag display correctly with their wager and color
                     els.nBetTag.textContent = `$${data.amount} on ${data.color.toUpperCase()}`;
                     startSpinSequence('npc', data.color, data.amount, data.pocketIndex);
                 }
@@ -1007,7 +849,7 @@
             });
 
             conn.on('close', () => {
-                if(matchActive && !fallbackMode) endMatch("Opponent disconnected.");
+                if(matchActive) endMatch("Opponent disconnected.");
             });
         }
 
