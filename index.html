@@ -6,6 +6,7 @@
     <title>Roulette Arena: Multiplayer & Effects</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- PeerJS for WebRTC Multiplayer -->
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -242,10 +243,10 @@
     </main>
 
     <!-- Match Setup Modal -->
-    <div id="opponent-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
+    <div id="opponent-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
         <div class="glass-panel gold-border p-6 rounded-3xl max-w-lg w-full text-center flex flex-col gap-4">
             <div>
-                <h2 class="font-serif-title text-2xl sm:text-3xl font-black gold-gradient-text mb-1">CHOOSE YOUR OPPONENT</h2>
+                <h2 class="font-serif-title text-2xl sm:text-3xl font-black gold-gradient-text mb-1">NEW MATCH</h2>
                 <p class="text-slate-400 text-xs sm:text-sm">Your Bankroll: <span id="modal-bankroll" class="text-emerald-400 font-bold">$100</span></p>
             </div>
 
@@ -700,13 +701,26 @@
             updateTurnIndicators(); updateUI(); startMatchTimer();
         }
 
-        // --- PeerJS Multiplayer Implementation (Fixed Handshake) ---
+        // --- PeerJS Multiplayer Implementation (Fixed Handshake & Menu Hide) ---
+        
+        // PeerJS Config using Google STUN servers to guarantee connectivity across devices/NATs
+        const peerConfig = {
+            config: {
+                'iceServers': [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
+        };
+
         els.createMpBtn.addEventListener('click', () => {
+            els.createMpBtn.textContent = "CREATING...";
             const shortCode = 'ROU-' + Math.floor(1000 + Math.random() * 9000);
-            peer = new Peer(shortCode);
+            peer = new Peer(shortCode, peerConfig);
 
             peer.on('open', (id) => {
                 isHost = true;
+                els.createMpBtn.textContent = "Create MP Game";
                 els.oppModal.classList.add('hidden');
                 els.waitCode.textContent = id;
                 els.mpWaitModal.classList.remove('hidden');
@@ -719,6 +733,7 @@
             });
 
             peer.on('error', (err) => {
+                els.createMpBtn.textContent = "Create MP Game";
                 alert("Room creation error or code already taken. Try again.");
                 console.error(err);
             });
@@ -728,18 +743,26 @@
             const code = els.joinMpInput.value.trim().toUpperCase();
             if(!code) return;
 
-            peer = new Peer();
+            els.joinMpBtn.textContent = "JOINING...";
+
+            peer = new Peer(peerConfig);
             peer.on('open', () => {
                 conn = peer.connect(code);
                 setupConnection();
                 isHost = false;
 
                 conn.on('open', () => {
-                    // Send ready signal to host once connection opens
+                    // Send ready signal to host once connection is fully established
                     conn.send({ type: 'JOIN_READY' });
+                });
+
+                conn.on('error', () => {
+                    els.joinMpBtn.textContent = "Join";
+                    alert("Room not found or connection failed.");
                 });
             });
             peer.on('error', (err) => {
+                els.joinMpBtn.textContent = "Join";
                 alert("Could not connect to room. Check code.");
             });
         });
@@ -751,7 +774,11 @@
         });
 
         function startMPGame(rounds) {
+            // Guarantee modals close for BOTH players
+            els.oppModal.classList.add('hidden');
             els.mpWaitModal.classList.add('hidden');
+            els.joinMpBtn.textContent = "Join";
+            
             isMultiplayer = true; matchActive = true;
             TOTAL_ROUNDS = rounds; matchTimerSeconds = 180;
             resetBoard();
