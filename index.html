@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIP Roulette Arena: Multiplayer</title>
+    <title>VIP Roulette Arena: Multiplayer & Ruby AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -30,6 +30,12 @@
             backdrop-filter: blur(15px);
             border: 1px solid rgba(212, 175, 55, 0.25);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .ruby-panel {
+            background: linear-gradient(145deg, rgba(30, 5, 15, 0.9) 0%, rgba(10, 0, 5, 0.95) 100%);
+            border: 1px solid rgba(244, 63, 94, 0.4);
+            box-shadow: 0 15px 35px rgba(225, 29, 72, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
         .gold-border { border: 1px solid rgba(212, 175, 55, 0.5); }
@@ -94,20 +100,21 @@
             50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.7); border-color: rgba(16, 185, 129, 0.9); }
         }
         .glow-green { animation: pulse-green 2s infinite; }
+
         .active-turn-ring { box-shadow: 0 0 25px rgba(212, 175, 55, 0.4); border-color: #d4af37 !important; }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.6); }
         ::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.7); border-radius: 4px; }
+        
+        .chat-bubble { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen justify-between items-center p-2 sm:p-4 overflow-x-hidden">
-
-    <!-- Custom Toast Notification -->
-    <div id="toast-notification" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-900/90 border border-red-500 text-white px-6 py-3 rounded-xl font-bold shadow-2xl z-[100] transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-3 backdrop-blur-md">
-        <i class="fa-solid fa-circle-exclamation text-red-400 text-lg"></i>
-        <span id="toast-msg">Notification here</span>
-    </div>
 
     <!-- Premium Header -->
     <header class="w-full max-w-5xl glass-panel rounded-2xl p-3 sm:p-4 mb-3 sm:mb-4 flex flex-wrap justify-between items-center gap-3">
@@ -177,14 +184,16 @@
         
         <!-- Roulette Wheel Section -->
         <div class="w-full lg:w-1/2 flex flex-col items-center justify-center relative">
+            
             <svg id="lightning-svg" class="hidden absolute z-[100] pointer-events-none" style="top: -30vh; left: 50%; transform: translateX(-50%); width: 180px; height: 75vh;" viewBox="0 0 100 500">
                 <path d="M60 0 L10 250 L45 250 L20 500 L90 200 L50 200 Z" fill="#ffffff" filter="drop-shadow(0 0 15px #3b82f6) drop-shadow(0 0 30px #60a5fa)"></path>
             </svg>
+
             <div id="blackhole-overlay" class="hidden absolute z-[60] pointer-events-none w-56 h-56 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
                 <div class="w-full h-full rounded-full animate-bh-pulse" style="background: radial-gradient(circle, #000000 30%, #4c1d95 60%, transparent 80%); box-shadow: 0 0 100px #7e22ce, inset 0 0 50px #000;"></div>
             </div>
 
-            <!-- Highly Realistic 3D Wheel Wrapper -->
+            <!-- Highly Realistic 3D Wheel Wrapper (Lag Fixed) -->
             <div id="wheel-wrapper" class="relative w-[260px] h-[260px] sm:w-[360px] sm:h-[360px] md:w-[420px] md:h-[420px] flex items-center justify-center rounded-full transition-all duration-300" style="box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,1);">
                 <!-- Premium Gold Outer Bezel -->
                 <div class="absolute inset-0 rounded-full border-[10px] sm:border-[14px] shadow-[inset_0_0_20px_#000,0_0_15px_rgba(212,175,55,0.2)] bg-gradient-to-br from-[#111] via-[#222] to-[#111] p-1.5 sm:p-2" style="border-style: solid; border-color: #574007;"></div>
@@ -219,21 +228,26 @@
                 <div class="grid grid-cols-3 gap-2 sm:gap-4">
                     <button data-color="red" class="color-btn relative group p-3 sm:p-5 rounded-xl border border-red-500/40 bg-gradient-to-b from-red-800 to-red-950 hover:border-red-400 transition-all flex flex-col items-center justify-center gap-1.5 shadow-lg">
                         <span class="font-black text-sm sm:text-xl text-red-400 tracking-wider drop-shadow-md">RED</span>
-                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-red-500/50">+2X</span>
+                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-red-500/50">+2X PAYOUT</span>
                         <div class="bet-indicator hidden absolute top-1.5 sm:top-3 right-1.5 sm:right-3 w-2.5 sm:w-4 h-2.5 sm:h-4 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444] border sm:border-2 border-white"></div>
                     </button>
                     <button data-color="green" class="color-btn glow-green relative group p-3 sm:p-5 rounded-xl border border-emerald-500/50 bg-gradient-to-b from-emerald-800 to-emerald-950 hover:border-emerald-400 transition-all flex flex-col items-center justify-center gap-1.5 shadow-lg">
                         <span class="font-black text-sm sm:text-xl text-emerald-400 tracking-wider drop-shadow-md">GREEN</span>
-                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-emerald-400/60">+25X</span>
+                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-emerald-400/60">+25X JACKPOT</span>
                         <div class="bet-indicator hidden absolute top-1.5 sm:top-3 right-1.5 sm:right-3 w-2.5 sm:w-4 h-2.5 sm:h-4 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399] border sm:border-2 border-white"></div>
                     </button>
                     <button data-color="black" class="color-btn relative group p-3 sm:p-5 rounded-xl border border-gray-500/40 bg-gradient-to-b from-gray-800 to-black hover:border-gray-400 transition-all flex flex-col items-center justify-center gap-1.5 shadow-lg">
                         <span class="font-black text-sm sm:text-xl text-gray-300 tracking-wider drop-shadow-md">BLACK</span>
-                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-gray-500/50">+2X</span>
+                        <span class="bg-black/60 text-white text-[8px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded border border-gray-500/50">+2X PAYOUT</span>
                         <div class="bet-indicator hidden absolute top-1.5 sm:top-3 right-1.5 sm:right-3 w-2.5 sm:w-4 h-2.5 sm:h-4 rounded-full bg-gray-300 shadow-[0_0_10px_#ffffff] border sm:border-2 border-black"></div>
                     </button>
                 </div>
             </div>
+
+            <!-- Ruby AI Button (Dynamically shown) -->
+            <button id="open-ruby-btn" class="hidden w-full py-2.5 bg-gradient-to-r from-rose-700 to-pink-900 hover:from-rose-600 hover:to-pink-800 border border-pink-400/50 rounded-xl text-white font-black tracking-widest text-xs sm:text-sm shadow-[0_0_15px_rgba(244,63,94,0.4)] transition">
+                <i class="fa-solid fa-heart mr-2 text-pink-300"></i> ASK RUBY 💋
+            </button>
 
             <div class="glass-panel p-3 sm:p-5 rounded-2xl flex flex-col gap-3 sm:gap-4">
                 <div class="flex justify-between items-center border-b border-[#d4af37]/20 pb-1.5 sm:pb-2">
@@ -256,6 +270,38 @@
             </div>
         </div>
     </main>
+
+    <!-- Ruby Chat Modal -->
+    <div id="ruby-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[80] p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="ruby-panel p-4 sm:p-6 rounded-3xl max-w-sm w-full flex flex-col gap-4 shadow-[0_20px_50px_rgba(225,29,72,0.4)]">
+            <div class="flex justify-between items-center border-b border-rose-500/30 pb-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-rose-900 border-2 border-pink-400 flex items-center justify-center text-xl shadow-[0_0_10px_rgba(244,63,94,0.5)]">
+                        💋
+                    </div>
+                    <h2 class="font-serif-title text-xl font-black text-pink-300">RUBY AI</h2>
+                </div>
+                <button id="close-ruby-btn" class="text-rose-400 hover:text-white px-2 py-1 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <div id="ruby-chat-box" class="h-64 sm:h-80 overflow-y-auto bg-black/60 rounded-xl p-3 flex flex-col gap-3 border border-rose-900/50">
+                <!-- Chat messages go here -->
+                <div class="flex flex-col items-start gap-1">
+                    <span class="text-[10px] text-pink-500 font-bold ml-1">Ruby</span>
+                    <div class="bg-rose-900/60 border border-pink-500/30 text-rose-100 text-xs sm:text-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-sm">
+                        Hey sugar. Feeling lucky today? Ask me what you should bet on... I've got a good eye for these things. 😘
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <input type="text" id="ruby-input" placeholder="Ask Ruby for advice..." class="flex-1 bg-black/80 border border-rose-800 rounded-xl px-3 py-2 text-rose-200 text-xs sm:text-sm focus:outline-none focus:border-pink-500 shadow-inner">
+                <button id="ruby-send-btn" class="px-4 py-2 bg-gradient-to-r from-rose-600 to-pink-700 hover:from-rose-500 hover:to-pink-600 text-white font-bold rounded-xl text-xs uppercase transition shadow-lg border border-pink-400">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Match Setup Modal -->
     <div id="opponent-modal" class="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
@@ -290,7 +336,7 @@
             <div class="p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-blue-500/40 bg-blue-900/20 flex flex-col gap-3 sm:gap-4 shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]">
                 <h3 class="text-[10px] sm:text-xs font-black text-blue-400 uppercase tracking-widest text-left flex justify-between items-center">
                     Multiplayer
-                    <span class="text-red-400 font-bold text-[8px] sm:text-[10px] bg-red-900/40 px-2 py-0.5 rounded border border-red-500/30">CAN'T CREATE ROOM ON PC</span>
+                    <span class="text-red-400 font-bold text-[8px] sm:text-[10px] bg-red-900/40 px-2 py-0.5 rounded border border-red-500/30">CAN'T CREATE ON PC</span>
                 </h3>
                 <div class="flex gap-2 sm:gap-3">
                     <button id="create-mp-btn" class="flex-1 py-2 sm:py-3 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-600 hover:to-indigo-700 text-white font-black rounded-lg sm:rounded-xl text-[10px] sm:text-xs uppercase transition shadow-lg border border-blue-400/50">
@@ -397,7 +443,19 @@
                 <span id="shop-bankroll" class="text-lg sm:text-2xl font-black text-[#d4af37]">$100</span>
             </div>
 
-            <div class="grid grid-cols-1 gap-3 sm:gap-4 text-left">
+            <div class="grid grid-cols-1 gap-3 sm:gap-4 text-left max-h-[50vh] overflow-y-auto">
+                <!-- Ruby AI Advisor -->
+                <div class="p-3 sm:p-5 rounded-2xl border border-rose-800/60 bg-gradient-to-r from-rose-950/60 to-black flex items-center gap-3 sm:gap-5 shadow-lg">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-rose-900/50 border border-pink-400 flex items-center justify-center text-2xl sm:text-3xl shadow-[inset_0_0_15px_rgba(244,63,94,0.5)]">💋</div>
+                    <div class="flex-1">
+                        <h3 class="font-black text-sm sm:text-lg text-pink-300">Ruby AI Advisor</h3>
+                        <p class="text-[10px] sm:text-sm text-gray-400 mt-1">Playful & flirty AI betting assistant ($100).</p>
+                    </div>
+                    <button id="buy-ruby-btn" class="shop-btn px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-b from-[#f9f295] to-[#d4af37] hover:brightness-110 text-black font-black rounded-xl text-[10px] sm:text-sm uppercase transition min-w-[70px] sm:min-w-[100px] shadow-[0_5px_10px_rgba(212,175,55,0.4)] border border-[#fff7d6]">
+                        $100
+                    </button>
+                </div>
+
                 <!-- Blue Lightning Effect -->
                 <div class="p-3 sm:p-5 rounded-2xl border border-gray-700 bg-gray-900/80 flex items-center gap-3 sm:gap-5 shadow-lg">
                     <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-blue-900/50 border border-blue-400 flex items-center justify-center text-2xl sm:text-3xl text-blue-400 shadow-[inset_0_0_15px_rgba(59,130,246,0.5)]">⚡</div>
@@ -422,7 +480,7 @@
                     </button>
                 </div>
             </div>
-            <p class="text-[10px] sm:text-xs font-bold text-gray-500">*Only one effect can be active at a time.</p>
+            <p class="text-[10px] sm:text-xs font-bold text-gray-500">*Only one visual effect can be active at a time.</p>
         </div>
     </div>
 
@@ -462,22 +520,11 @@
         </div>
     </div>
 
+    <!-- Main Logic -->
     <script>
-        // Custom Alert/Notification System
-        function showToast(msg) {
-            const toast = document.getElementById('toast-notification');
-            document.getElementById('toast-msg').textContent = msg;
-            toast.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => toast.classList.add('opacity-0', 'pointer-events-none'), 3500);
-        }
-
-        // --- Complete Audio Engine ---
+        // --- Sound Engine ---
         class SoundController {
-            constructor() { 
-                this.ctx = null; 
-                this.musicPlaying = false;
-                this.musicInterval = null;
-            }
+            constructor() { this.ctx = null; this.musicNode = null; }
             init() {
                 if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 if (this.ctx.state === 'suspended') this.ctx.resume();
@@ -494,6 +541,19 @@
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
                 osc.connect(gain); gain.connect(this.ctx.destination);
                 osc.start(); osc.stop(this.ctx.currentTime + 0.04);
+            }
+            playChip() {
+                if(!soundEnabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(1200, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.05);
             }
             playWin(isGreen = false) {
                 if (!soundEnabled) return;
@@ -526,19 +586,6 @@
                     osc.stop(this.ctx.currentTime + idx * 0.1 + 0.25);
                 });
             }
-            playChip() {
-                if(!soundEnabled) return;
-                this.init();
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(1200, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.05);
-                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.05);
-            }
             playMusic() {
                 if (!soundEnabled || this.musicPlaying) return;
                 this.init();
@@ -550,7 +597,7 @@
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
                     osc.type = 'sine';
-                    osc.frequency.value = freq / 2; // Smooth lounge bass note
+                    osc.frequency.value = freq / 2;
                     gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 2);
                     osc.connect(gain); gain.connect(this.ctx.destination);
@@ -577,8 +624,7 @@
         let npcBalance = 100;
         let selectedColor = null;
         let betAmount = 10;
-        let myRole = 'host';
-        let activeTurn = 'host'; // or 'guest', or 'player'/'npc' in SP
+        let activeTurn = 'player';
         let npcBet = { color: null, amount: 0 };
         let isSpinning = false;
         let currentRound = 1;
@@ -587,9 +633,9 @@
         let matchTimerSeconds = 180;
         let timerInterval = null;
         let matchActive = false;
-        let isModalProcessing = false; // Prevents double-clicking bugs
+        let isModalProcessing = false;
 
-        let effects = { lightning: { owned: false }, blackhole: { owned: false } };
+        let effects = { lightning: { owned: false }, blackhole: { owned: false }, ruby: { owned: false } };
         let activeEffect = null; 
 
         // Expanded 8 NPC Roster
@@ -650,7 +696,6 @@
             ctx.save(); 
             ctx.translate(centerX, centerY);
 
-            // Fast offset shadow (PC Lag Fix)
             ctx.shadowColor = 'rgba(0,0,0,0.8)';
             ctx.shadowBlur = 15;
             ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI * 2); ctx.fill();
@@ -742,6 +787,13 @@
             shopModal: document.getElementById('shop-modal'),
             buyLight: document.getElementById('buy-lightning-btn'),
             buyBlackhole: document.getElementById('buy-blackhole-btn'),
+            buyRubyBtn: document.getElementById('buy-ruby-btn'),
+            openRubyBtn: document.getElementById('open-ruby-btn'),
+            rubyModal: document.getElementById('ruby-modal'),
+            closeRubyBtn: document.getElementById('close-ruby-btn'),
+            rubyChatBox: document.getElementById('ruby-chat-box'),
+            rubyInput: document.getElementById('ruby-input'),
+            rubySendBtn: document.getElementById('ruby-send-btn'),
             roundBtns: document.querySelectorAll('.round-btn'),
             timeBtns: document.querySelectorAll('.time-btn'),
             npcSelects: document.querySelectorAll('.npc-select-btn'),
@@ -792,18 +844,31 @@
 
         // --- Shop Logic ---
         function updateShopButtons() {
+            if(effects.ruby.owned) {
+                els.buyRubyBtn.textContent = 'OWNED';
+                els.buyRubyBtn.className = `shop-btn px-3 sm:px-5 py-2 sm:py-3 bg-rose-600 text-white font-black rounded-xl text-[10px] sm:text-sm uppercase min-w-[70px] sm:min-w-[100px] border border-rose-400`;
+                els.openRubyBtn.classList.remove('hidden');
+            }
             if(effects.lightning.owned) {
                 els.buyLight.textContent = activeEffect === 'lightning' ? 'EQUIPPED' : 'EQUIP';
-                els.buyLight.className = `shop-btn px-3 py-2 sm:px-5 sm:py-3 font-black rounded-xl text-[10px] sm:text-sm uppercase min-w-[70px] sm:min-w-[100px] shadow-[0_5px_10px_rgba(212,175,55,0.4)] border border-[#fff7d6] ${activeEffect === 'lightning' ? 'bg-[#d4af37] text-black' : 'bg-gray-800 text-gray-400 border-gray-600 hover:border-[#d4af37]'}`;
+                els.buyLight.className = `shop-btn px-3 sm:px-5 py-2 sm:py-3 font-black rounded-xl text-[10px] sm:text-sm uppercase min-w-[70px] sm:min-w-[100px] shadow-[0_5px_10px_rgba(212,175,55,0.4)] border border-[#fff7d6] ${activeEffect === 'lightning' ? 'bg-[#d4af37] text-black' : 'bg-gray-800 text-gray-400 border-gray-600 hover:border-[#d4af37]'}`;
             }
             if(effects.blackhole.owned) {
                 els.buyBlackhole.textContent = activeEffect === 'blackhole' ? 'EQUIPPED' : 'EQUIP';
-                els.buyBlackhole.className = `shop-btn px-3 py-2 sm:px-5 sm:py-3 font-black rounded-xl text-[10px] sm:text-sm uppercase min-w-[70px] sm:min-w-[100px] shadow-[0_5px_10px_rgba(212,175,55,0.4)] border border-[#fff7d6] ${activeEffect === 'blackhole' ? 'bg-[#d4af37] text-black' : 'bg-gray-800 text-gray-400 border-gray-600 hover:border-[#d4af37]'}`;
+                els.buyBlackhole.className = `shop-btn px-3 sm:px-5 py-2 sm:py-3 font-black rounded-xl text-[10px] sm:text-sm uppercase min-w-[70px] sm:min-w-[100px] shadow-[0_5px_10px_rgba(212,175,55,0.4)] border border-[#fff7d6] ${activeEffect === 'blackhole' ? 'bg-[#d4af37] text-black' : 'bg-gray-800 text-gray-400 border-gray-600 hover:border-[#d4af37]'}`;
             }
         }
 
         els.shopBtn.addEventListener('click', () => { els.shopModal.classList.remove('opacity-0', 'pointer-events-none'); });
         els.closeShopBtn.addEventListener('click', () => { els.shopModal.classList.add('opacity-0', 'pointer-events-none'); });
+
+        els.buyRubyBtn.addEventListener('click', () => {
+            if(effects.ruby.owned) { sound.playTick(); return; }
+            if(globalBankroll >= 100) {
+                globalBankroll -= 100; effects.ruby.owned = true;
+                updateUI(); updateShopButtons(); sound.playWin(true);
+            } else { sound.playLose(); }
+        });
 
         els.buyLight.addEventListener('click', () => {
             if(effects.lightning.owned) { activeEffect = 'lightning'; sound.playTick(); updateShopButtons(); return; }
@@ -820,6 +885,66 @@
                 updateUI(); updateShopButtons(); sound.playWin(true);
             } else { sound.playLose(); }
         });
+
+        // --- Ruby AI Logic ---
+        els.openRubyBtn.addEventListener('click', () => els.rubyModal.classList.remove('opacity-0', 'pointer-events-none'));
+        els.closeRubyBtn.addEventListener('click', () => els.rubyModal.classList.add('opacity-0', 'pointer-events-none'));
+
+        let rubyChatHistory = [];
+        async function fetchRubyResponse(userText) {
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            
+            const recentSpins = Array.from(els.histContainer.children).map(c => c.textContent).join(', ') || "None yet";
+            const prompt = `Game context: Recent roulette spins were [${recentSpins}]. User says: "${userText}"`;
+
+            const payload = {
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                systemInstruction: {
+                    parts: [{ text: "You are Ruby, a playfully flirty, confident, and glamorous high-roller casino AI assistant. You help the user decide what to bet on in Roulette (Red, Black, or Green). Analyze the recent spins context if provided, but keep your advice fun, slightly cheeky, and charismatic. Keep your response to 2 short sentences. Do NOT be sexually explicit." }]
+                }
+            };
+
+            try {
+                const res = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = await res.json();
+                return data?.candidates?.[0]?.content?.parts?.[0]?.text || "Mmm, the network is acting up sugar. Try asking again.";
+            } catch (e) {
+                return "Having trouble connecting right now, darling. Maybe just follow your heart? 😘";
+            }
+        }
+
+        function appendRubyMsg(who, text) {
+            const div = document.createElement('div');
+            div.className = "flex flex-col items-" + (who === 'user' ? 'end' : 'start') + " gap-1 chat-bubble";
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.className = `text-[10px] font-bold mx-1 ${who === 'user' ? 'text-gray-400' : 'text-pink-500'}`;
+            nameSpan.textContent = who === 'user' ? 'You' : 'Ruby';
+            
+            const bubble = document.createElement('div');
+            bubble.className = `text-xs sm:text-sm px-3 py-2 rounded-2xl shadow-sm ${who === 'user' ? 'bg-gray-800 text-gray-200 rounded-tr-none' : 'bg-rose-900/60 border border-pink-500/30 text-rose-100 rounded-tl-none'}`;
+            bubble.textContent = text;
+
+            div.appendChild(nameSpan); div.appendChild(bubble);
+            els.rubyChatBox.appendChild(div);
+            els.rubyChatBox.scrollTop = els.rubyChatBox.scrollHeight;
+        }
+
+        els.rubySendBtn.addEventListener('click', async () => {
+            const text = els.rubyInput.value.trim();
+            if(!text) return;
+            els.rubyInput.value = '';
+            
+            appendRubyMsg('user', text);
+            els.rubySendBtn.disabled = true;
+            
+            const reply = await fetchRubyResponse(text);
+            appendRubyMsg('ruby', reply);
+            els.rubySendBtn.disabled = false;
+        });
+        els.rubyInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') els.rubySendBtn.click(); });
+
 
         // --- Round & Time Setup ---
         els.roundBtns.forEach(btn => {
@@ -863,12 +988,13 @@
             isMultiplayer = false; currentNPC = npc;
             playerBalance = 100; npcBalance = 100; 
             currentRound = 1; matchTimerSeconds = TOTAL_TIME;
-            matchActive = true; activeTurn = 'player'; myRole = 'host'; selectedColor = null;
+            matchActive = true; activeTurn = 'player'; selectedColor = null;
 
             resetBoard();
             els.npcName.innerHTML = `${npc.name} ${npc.icon}`;
             els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
-            resetBettingUI();
+            els.pBetTag.textContent = "No Bet";
+            els.nBetTag.textContent = "No Bet";
             
             els.oppModal.classList.add('hidden');
             els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
@@ -879,8 +1005,7 @@
             setTimeout(resizeCanvas, 100);
         }
 
-        // --- PeerJS Multiplayer Implementation (Fixed Architecture) ---
-        
+        // --- PeerJS Multiplayer Implementation ---
         const peerConfig = {
             config: {
                 'iceServers': [
@@ -901,14 +1026,14 @@
             const mpTimeout = setTimeout(() => {
                 if(!peer || !peer.id) {
                     els.createMpBtn.textContent = "Create MP Game";
-                    showToast("Network blocked. Please try again or check firewall.");
+                    alert("Network blocked. Please try again.");
                     if(peer) peer.destroy();
                 }
             }, 8000);
 
             peer.on('open', (id) => {
                 clearTimeout(mpTimeout);
-                isHost = true; myRole = 'host';
+                isHost = true;
                 els.createMpBtn.textContent = "Create MP Game";
                 els.oppModal.classList.add('hidden');
                 els.waitCode.textContent = id;
@@ -918,15 +1043,16 @@
             peer.on('connection', (incomingConn) => {
                 conn = incomingConn;
                 setupConnection();
+                isHost = true;
             });
 
             peer.on('error', (err) => {
                 clearTimeout(mpTimeout);
                 els.createMpBtn.textContent = "Create MP Game";
                 if(err.type === 'unavailable-id') {
-                    showToast("Code collision. Please click 'Create MP Game' again.");
+                    alert("Code collision. Please click 'Create MP Game' again.");
                 } else {
-                    showToast("Room creation error: " + err.type);
+                    alert("Room creation error: " + err.type);
                 }
             });
         });
@@ -940,7 +1066,7 @@
             
             const mpTimeout = setTimeout(() => {
                 els.joinMpBtn.textContent = "Join";
-                showToast("Connection timed out. Verify code is correct.");
+                alert("Connection timed out. Verify code is correct.");
                 if(peer) peer.destroy();
             }, 8000);
 
@@ -948,7 +1074,7 @@
                 clearTimeout(mpTimeout);
                 conn = peer.connect(code);
                 setupConnection();
-                isHost = false; myRole = 'guest';
+                isHost = false;
 
                 conn.on('open', () => {
                     els.joinMpBtn.textContent = "Join";
@@ -957,13 +1083,13 @@
 
                 conn.on('error', () => {
                     els.joinMpBtn.textContent = "Join";
-                    showToast("Room not found or connection failed.");
+                    alert("Room not found or connection failed.");
                 });
             });
             peer.on('error', (err) => {
                 clearTimeout(mpTimeout);
                 els.joinMpBtn.textContent = "Join";
-                showToast("Error connecting: " + err.type);
+                alert("Error connecting: " + err.type);
             });
         });
 
@@ -989,20 +1115,20 @@
 
             els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> Friend`;
             els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
-            resetBettingUI();
+            els.pBetTag.textContent = "No Bet";
+            els.nBetTag.textContent = "No Bet";
             
             els.mpCodeDisp.textContent = isHost ? peer.id : conn.peer;
             els.statsBar.classList.remove('hidden'); els.arenaBar.classList.remove('hidden');
             els.mpDisplay.classList.remove('hidden');
 
-            activeTurn = 'host'; // Host ALWAYS goes first in MP
+            activeTurn = isHost ? 'player' : 'npc';
             
             sound.playMusic();
             updateTurnIndicators(); updateUI(); startMatchTimer();
             setTimeout(resizeCanvas, 100);
         }
 
-        // PERFECTED DETERMINISTIC MP LOGIC
         function setupConnection() {
             conn.on('data', (data) => {
                 if(data.type === 'JOIN_READY' && isHost) {
@@ -1013,12 +1139,21 @@
                     startMPGame(data.rounds, data.time);
                 }
                 if(data.type === 'SPIN') {
-                    // Update UI immediately to show friend's bet
                     els.nBetTag.textContent = `$${data.amount} on ${data.color.toUpperCase()}`;
-                    startSpinSequence('remote', data.color, data.amount, data.pocketIndex);
+                    startSpinSequence('npc', data.color, data.amount, data.pocketIndex);
+                }
+                if(data.type === 'SYNC') {
+                    playerBalance = isHost ? data.hostBal : data.guestBal;
+                    npcBalance = isHost ? data.guestBal : data.hostBal;
+                    currentRound = data.round;
+                    activeTurn = data.turn === (isHost ? 'host' : 'guest') ? 'player' : 'npc';
+                    
+                    els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-[#d4af37]'); b.querySelector('.bet-indicator').classList.add('hidden'); });
+                    selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
+                    
+                    updateUI(); updateTurnIndicators();
                 }
                 if(data.type === 'FINISH') {
-                    // If the other player declares bankruptcy on their turn and tells us
                     endMatch(data.reason);
                 }
             });
@@ -1028,6 +1163,7 @@
             });
         }
 
+        // --- Game Sync Logic ---
         function startMatchTimer() {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -1036,32 +1172,17 @@
                 const mins = Math.floor(matchTimerSeconds / 60).toString().padStart(2, '0');
                 const secs = (matchTimerSeconds % 60).toString().padStart(2, '0');
                 els.mTimer.textContent = `${mins}:${secs}`;
-                
-                // Only host triggers the end to avoid double triggers
                 if (matchTimerSeconds <= 0 && (!isMultiplayer || (isMultiplayer && isHost))) {
                     if(isMultiplayer && conn) {
                         conn.send({ type: 'FINISH', reason: "Time's Up!" });
-                    }
-                    endMatch("Time's Up!");
+                        endMatch("Time's Up!");
+                    } else endMatch("Time's Up!");
                 }
             }, 1000);
         }
 
-        function resetBettingUI() {
-            els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-[#d4af37]'); b.querySelector('.bet-indicator').classList.add('hidden'); });
-            selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
-            validateBet();
-        }
-
         function updateTurnIndicators() {
-            let isMyTurn = false;
-            if (!isMultiplayer) {
-                isMyTurn = (activeTurn === 'player');
-            } else {
-                isMyTurn = (activeTurn === myRole);
-            }
-
-            if (isMyTurn) {
+            if (activeTurn === 'player') {
                 els.pCard.classList.add('active-turn-ring'); els.nCard.classList.remove('active-turn-ring');
                 els.pStatus.className = "text-[9px] sm:text-[10px] bg-[#0a151b] text-[#d4af37] border border-[#d4af37]/60 px-2 sm:px-3 py-0.5 sm:py-1 rounded font-black uppercase animate-pulse shadow-[0_0_10px_rgba(212,175,55,0.4)]";
                 els.pStatus.textContent = "YOUR TURN";
@@ -1094,8 +1215,7 @@
 
         els.colorBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const isMyTurn = (!isMultiplayer && activeTurn === 'player') || (isMultiplayer && activeTurn === myRole);
-                if (isSpinning || !matchActive || !isMyTurn) return;
+                if (isSpinning || !matchActive || activeTurn !== 'player') return;
                 sound.playChip();
                 els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-[#d4af37]'); b.querySelector('.bet-indicator').classList.add('hidden'); });
                 btn.classList.add('ring-4', 'ring-[#d4af37]'); btn.querySelector('.bet-indicator').classList.remove('hidden');
@@ -1107,8 +1227,7 @@
 
         els.chipBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const isMyTurn = (!isMultiplayer && activeTurn === 'player') || (isMultiplayer && activeTurn === myRole);
-                if (isSpinning || !matchActive || !isMyTurn) return;
+                if (isSpinning || !matchActive || activeTurn !== 'player') return;
                 sound.playChip();
                 els.chipBtns.forEach(b => b.classList.remove('chip-selected')); btn.classList.add('chip-selected');
                 const val = btn.getAttribute('data-amount');
@@ -1122,11 +1241,7 @@
             if (betAmount > playerBalance) betAmount = Math.max(0, playerBalance);
             els.currBetDisplay.textContent = `Selected: $${betAmount.toLocaleString()}`;
         }
-        
-        function validateBet() { 
-            const isMyTurn = (!isMultiplayer && activeTurn === 'player') || (isMultiplayer && activeTurn === myRole);
-            els.spinBtn.disabled = !(selectedColor && betAmount > 0 && playerBalance >= betAmount && !isSpinning && matchActive && isMyTurn); 
-        }
+        function validateBet() { els.spinBtn.disabled = !(selectedColor && betAmount > 0 && playerBalance >= betAmount && !isSpinning && matchActive && activeTurn === 'player'); }
         
         function updateUI() {
             els.pBalance.textContent = `$${Math.max(0, playerBalance).toLocaleString()}`;
@@ -1139,32 +1254,40 @@
         }
 
         els.spinBtn.addEventListener('click', () => {
-            const isMyTurn = (!isMultiplayer && activeTurn === 'player') || (isMultiplayer && activeTurn === myRole);
-            if (isSpinning || !isMyTurn || !selectedColor || betAmount > playerBalance) return;
+            if (isSpinning || activeTurn !== 'player' || !selectedColor || betAmount > playerBalance) return;
             
             els.pBetTag.textContent = `$${betAmount} on ${selectedColor.toUpperCase()}`;
+
+            // Deduct immediately on spin
+            playerBalance -= betAmount;
+            updateUI();
 
             if(isMultiplayer && conn) {
                 const pIndex = Math.floor(Math.random() * POCKET_COUNT);
                 conn.send({ type: 'SPIN', color: selectedColor, amount: betAmount, pocketIndex: pIndex });
                 els.spinBtn.disabled = true;
-                startSpinSequence('local', selectedColor, betAmount, pIndex);
+                startSpinSequence('player', selectedColor, betAmount, pIndex);
             } else {
-                startSpinSequence('local', selectedColor, betAmount);
+                startSpinSequence('player', selectedColor, betAmount);
             }
         });
 
         function triggerNPCTurn() {
             if(isMultiplayer) return; 
             npcBet = generateNPCBet();
-            if (npcBet.amount <= 0) { endMatch(`${currentNPC.name} Went Bankrupt!`); return; }
+            if (npcBet.amount <= 0) { endMatch("NPC Bankrupt!"); return; }
             els.nBetTag.textContent = `$${npcBet.amount} on ${npcBet.color.toUpperCase()}`;
+            
+            // Deduct immediately
+            npcBalance -= npcBet.amount;
+            updateUI();
+
             setTimeout(() => { startSpinSequence('npc', npcBet.color, npcBet.amount); }, 1200);
         }
 
         function startSpinSequence(who, color, amount, forcedPocketIndex = null) {
             sound.init(); isSpinning = true; els.spinBtn.disabled = true;
-            els.spinTurnTxt.textContent = who === 'local' ? "Your Spin:" : (isMultiplayer ? "Friend's Spin:" : `${currentNPC.name}'s Spin:`);
+            els.spinTurnTxt.textContent = who === 'player' ? "Your Spin:" : (isMultiplayer ? "Friend's Spin:" : `${currentNPC.name}'s Spin:`);
             els.spinBadge.classList.remove('hidden');
 
             const winningIndex = forcedPocketIndex !== null ? forcedPocketIndex : Math.floor(Math.random() * POCKET_COUNT);
@@ -1219,34 +1342,52 @@
             const multiplier = (color === 'green') ? 25 : 2;
             let netProfit = isWin ? amount * multiplier : 0;
 
-            // Apply directly locally for everyone
-            if (who === 'local') {
-                if (isWin) playerBalance += (netProfit - amount); else playerBalance -= amount;
-            } else {
-                if (isWin) npcBalance += (netProfit - amount); else npcBalance -= amount;
+            // Apply immediately to local memory
+            // (Note: The bet `amount` was ALREADY deducted at spin start)
+            if(!isMultiplayer || isHost) {
+                if (who === 'player') {
+                    if (isWin) playerBalance += netProfit; 
+                } else {
+                    if (isWin) npcBalance += netProfit;
+                }
             }
 
-            addHistoryBadge(pocket); 
-            updateUI();
+            addHistoryBadge(pocket); updateUI();
             
-            // Audio Feedback locally
-            if (who === 'local') {
+            if (who === 'player') {
                 if(isWin) sound.playWin(color === 'green'); else sound.playLose();
             } else {
                 if(isWin) sound.playLose(); else sound.playWin(true);
             }
 
             showTurnModal(who, isWin, pocket, amount, netProfit);
+
+            if(isMultiplayer && isHost && conn) {
+                const nextTurnStr = activeTurn === 'player' ? 'guest' : 'host';
+                let nextRnd = currentRound;
+                if(nextTurnStr === 'host') nextRnd++;
+                
+                activeTurn = (nextTurnStr === 'host') ? 'player' : 'npc';
+                currentRound = nextRnd;
+
+                conn.send({
+                    type: 'SYNC',
+                    hostBal: playerBalance,
+                    guestBal: npcBalance,
+                    round: nextRnd,
+                    turn: nextTurnStr
+                });
+            }
         }
 
         function showTurnModal(who, isWin, pocket, bet, profit) {
-            if (who === 'local') {
+            if (who === 'player') {
                 if (isWin) {
                     els.turnIcon.className = "w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-4xl sm:text-5xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500/50";
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
                     els.turnTitle.textContent = "YOU WON!"; els.turnTitle.className = "font-serif-title text-2xl sm:text-3xl font-black mb-1 sm:mb-2 tracking-wide text-emerald-400 drop-shadow-md";
                     els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
-                    els.turnAmt.textContent = `+$${(profit - bet).toLocaleString()} Net Profit`; els.turnAmt.className = "text-3xl sm:text-4xl font-black text-emerald-400 drop-shadow-lg";
+                    els.turnAmt.textContent = `+$${profit.toLocaleString()} Total Payout`; els.turnAmt.className = "text-3xl sm:text-4xl font-black text-emerald-400 drop-shadow-lg";
                     confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
                 } else {
                     els.turnIcon.className = "w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-4xl sm:text-5xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-red-500/20 text-red-500 border-2 border-red-500/50";
@@ -1263,7 +1404,7 @@
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-robot"></i>';
                     els.turnTitle.textContent = `${oppName} WON!`; els.turnTitle.className = "font-serif-title text-2xl sm:text-3xl font-black mb-1 sm:mb-2 tracking-wide text-[#d4af37] drop-shadow-md";
                     els.turnDesc.textContent = `Landed on ${pocket.color.toUpperCase()} (${pocket.num}).`;
-                    els.turnAmt.textContent = `+$${(profit - bet).toLocaleString()} Net Profit`; els.turnAmt.className = "text-3xl sm:text-4xl font-black text-[#d4af37] drop-shadow-lg";
+                    els.turnAmt.textContent = `+$${profit.toLocaleString()} Total Payout`; els.turnAmt.className = "text-3xl sm:text-4xl font-black text-[#d4af37] drop-shadow-lg";
                 } else {
                     els.turnIcon.className = "w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-4xl sm:text-5xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500/50";
                     els.turnIcon.innerHTML = '<i class="fa-solid fa-face-smile"></i>';
@@ -1281,7 +1422,7 @@
         els.turnDesc = document.getElementById('turn-desc'); els.turnAmt = document.getElementById('turn-amount');
 
         els.turnModalBtn.addEventListener('click', () => {
-            if (isModalProcessing) return; // FIX: Strict lock prevents double clicking and infinite loops
+            if (isModalProcessing) return; 
             isModalProcessing = true;
             
             els.turnModal.classList.add('opacity-0', 'pointer-events-none');
@@ -1289,7 +1430,6 @@
 
             setTimeout(() => { isModalProcessing = false; }, 500);
 
-            // FIX: Check BOTH balances instantly for bankruptcy. Triggers locally for both players.
             if (playerBalance <= 0 || npcBalance <= 0) {
                 let reason = "";
                 if (playerBalance <= 0) reason = "You Went Bankrupt!";
@@ -1298,10 +1438,10 @@
                     reason = `${loseTxt} Went Bankrupt!`;
                 }
                 
-                if (isMultiplayer && conn) {
+                if (isMultiplayer && isHost && conn) {
                     conn.send({ type: 'FINISH', reason: reason });
                 }
-                endMatch(reason);
+                if(!isMultiplayer || isHost) endMatch(reason);
                 return;
             }
 
@@ -1311,26 +1451,15 @@
                 } else {
                     activeTurn = 'player'; currentRound++;
                     if (currentRound > TOTAL_ROUNDS) { endMatch("Match Rounds Complete!"); return; }
-                    resetBettingUI();
+                    els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-[#d4af37]'); b.querySelector('.bet-indicator').classList.add('hidden'); });
+                    selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
                     updateTurnIndicators(); updateUI();
                 }
             } else {
-                // MP Deterministic Turn Switch
-                activeTurn = (activeTurn === 'host') ? 'guest' : 'host';
-                
-                // If it came back to the Host, a full round is completed
-                if (activeTurn === 'host') {
-                    currentRound++;
-                }
-
-                if (currentRound > TOTAL_ROUNDS) { 
-                    endMatch("Match Rounds Complete!"); 
-                    return; 
-                }
-
-                resetBettingUI();
-                updateTurnIndicators(); 
-                updateUI();
+                if (currentRound > TOTAL_ROUNDS) { endMatch("Match Rounds Complete!"); return; }
+                els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-[#d4af37]'); b.querySelector('.bet-indicator').classList.add('hidden'); });
+                selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
+                updateTurnIndicators(); updateUI();
             }
         });
 
