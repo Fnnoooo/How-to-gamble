@@ -484,7 +484,7 @@
             
             <!-- Version Tag -->
             <div class="text-right text-[#d4af37] font-black text-[10px] sm:text-xs mt-2 pr-2 drop-shadow-md animate-pulse">
-                Version 1.10V
+                Version 1.11V
             </div>
         </div>
     </div>
@@ -1013,9 +1013,14 @@
                 systemInstruction: { parts: [{ text: systemPrompt }] }
             };
 
-            let apiKey = "AQ.Ab8RN6KyIr1kI1zqI6GT7nkBfNn2tWYnMqnIhiMSR04te82FwQ";
+            let apiKey = "AQ.Ab8RN6LC8PJJTCezv_pDu6OVEhJh4mU8dBqvALLdZoDfp7fCRA";
             const customKey = document.getElementById('ruby-api-key-input').value.trim();
             if (customKey) apiKey = customKey;
+
+            // Intelligent Key Detection
+            if (apiKey.startsWith("AQ.")) {
+                return "Oh honey... that text starting with 'AQ.' is a Google login cookie, not an API key! You have to click the blue 'Create API key' button on the website! 💋";
+            }
 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
