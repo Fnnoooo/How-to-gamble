@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIP Roulette Arena: v1.14V</title>
+    <title>VIP Roulette Arena: v1.15V</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -1015,13 +1015,9 @@
             let headers = { 'Content-Type': 'application/json' };
 
             if (customKey) {
-                if (customKey.startsWith("AIza")) {
-                    apiUrl += `?key=${customKey}`;
-                } else {
-                    // 2026 Auth Key (AQ.) Support
-                    headers['Authorization'] = `Bearer ${customKey}`;
-                    headers['x-goog-api-key'] = customKey;
-                }
+                // Fixed: AQ. keys are native API keys, so pass them via query param or x-goog-api-key, not Bearer token!
+                apiUrl += `?key=${customKey}`;
+                headers['x-goog-api-key'] = customKey;
             }
 
             try {
@@ -1034,10 +1030,7 @@
                 if (!response.ok) {
                     const errText = await response.text();
                     console.error("API Error:", response.status, errText);
-                    if (customKey.startsWith("AQ.") && (response.status === 401 || response.status === 403)) {
-                        return "Oh daddy... that Auth Key (AQ.) was rejected by the server! Check if your key has expired or requires standard AIza formatting. 💋🔥";
-                    }
-                    return `Mmm... server sent status ${response.status}. Try another message, handsome? 💋`;
+                    return `Mmm... server sent status ${response.status}. Check if your Auth Key (AQ.) is valid, handsome? 💋`;
                 }
 
                 const result = await response.json();
@@ -1077,11 +1070,12 @@
             div.innerHTML = `
                 <span class="text-[10px] text-pink-500 font-bold ml-1">Ruby</span>
                 <div class="bg-rose-900/40 border border-pink-500/20 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm flex items-center justify-center">
-                    <div class="flex gap-1">
-                        <div class="w-1.5 h-1.5 bg-pink-500 rounded-full animate-bounce"></div>
-                        <div class="w-1.5 h-1.5 bg-pink-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                        <div class="w-1.5 h-1.5 bg-pink-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                    </div>
+            <!-- Version Tag (Version 1.15V) -->
+            <div class="text-right text-[#d4af37] font-black text-[10px] sm:text-xs mt-2 pr-2 drop-shadow-md animate-pulse">
+                Version 1.15V
+            </div>
+        </div>
+    </div>
                 </div>
             `;
             els.rubyChatBox.appendChild(div);
