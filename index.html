@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIP Roulette Arena: v1.06V</title>
+    <title>VIP Roulette Arena: v1.10V</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -137,6 +137,20 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Version 1.08V Animations */
+        @keyframes slide-in-right {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .history-slide-in { animation: slide-in-right 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        
+        @keyframes bankroll-pop {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.2); filter: brightness(1.5); text-shadow: 0 0 20px #d4af37; }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        .bankroll-pulse { animation: bankroll-pop 0.4s ease-out; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen justify-between items-center p-2 sm:p-4 overflow-x-hidden">
@@ -227,6 +241,9 @@
             <div id="blackhole-overlay" class="hidden absolute z-[60] pointer-events-none w-56 h-56 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
                 <div class="w-full h-full rounded-full animate-bh-pulse" style="background: radial-gradient(circle, #000000 30%, #4c1d95 60%, transparent 80%); box-shadow: 0 0 100px #7e22ce, inset 0 0 50px #000;"></div>
             </div>
+
+            <!-- Ambient Glow Behind Wheel -->
+            <div class="absolute z-0 w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] rounded-full bg-[#d4af37]/15 filter blur-[40px] animate-pulse pointer-events-none"></div>
 
             <!-- Highly Realistic 3D Wheel Wrapper (Lag Fixed) -->
             <div id="wheel-wrapper" class="relative w-[260px] h-[260px] sm:w-[360px] sm:h-[360px] md:w-[420px] md:h-[420px] flex items-center justify-center rounded-full transition-all duration-300 animate-float" style="box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,1);">
@@ -323,6 +340,11 @@
                 <label class="text-[10px] text-pink-400 font-bold flex items-center gap-1 cursor-pointer">
                     <input type="checkbox" id="ruby-freak-toggle" class="accent-pink-500"> 😈 Full Freakness
                 </label>
+                <div class="flex items-center gap-1">
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] text-pink-400 hover:text-pink-300 transition mr-1" title="Get your free AIza key here!"><i class="fa-solid fa-circle-question"></i></a>
+                    <i class="fa-solid fa-key text-rose-500 text-[10px]"></i>
+                    <input type="password" id="ruby-api-key-input" placeholder="Paste AIzaSy... key here" class="bg-black/80 border border-rose-800 rounded px-2 py-0.5 text-rose-200 text-[9px] focus:outline-none focus:border-pink-500 w-28 sm:w-36 placeholder-rose-800 shadow-inner" title="Paste your Gemini API key here if playing in a new tab">
+                </div>
             </div>
 
             <div id="ruby-chat-box" class="h-64 sm:h-80 overflow-y-auto bg-black/60 rounded-xl p-3 flex flex-col gap-3 border border-rose-900/50">
@@ -462,7 +484,7 @@
             
             <!-- Version Tag -->
             <div class="text-right text-[#d4af37] font-black text-[10px] sm:text-xs mt-2 pr-2 drop-shadow-md animate-pulse">
-                Version 1.06V
+                Version 1.10V
             </div>
         </div>
     </div>
@@ -991,7 +1013,10 @@
                 systemInstruction: { parts: [{ text: systemPrompt }] }
             };
 
-            const apiKey = "AQ.Ab8RN6Lq4efJkUs2CcZgsx_8NZYyN99YK6YhD2aX8lA6gt0qaw";
+            let apiKey = "";
+            const customKey = document.getElementById('ruby-api-key-input').value.trim();
+            if (customKey) apiKey = customKey;
+
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
             try {
@@ -1054,6 +1079,29 @@
             els.rubyChatBox.scrollTop = els.rubyChatBox.scrollHeight;
         }
 
+        function showTypingIndicator() {
+            const div = document.createElement('div');
+            div.id = 'ruby-typing-indicator';
+            div.className = "flex flex-col items-start gap-1 chat-bubble";
+            div.innerHTML = `
+                <span class="text-[10px] text-pink-500 font-bold ml-1">Ruby</span>
+                <div class="bg-rose-900/40 border border-pink-500/20 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm flex items-center justify-center">
+                    <div class="flex gap-1">
+                        <div class="w-1.5 h-1.5 bg-pink-500 rounded-full animate-bounce"></div>
+                        <div class="w-1.5 h-1.5 bg-pink-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                        <div class="w-1.5 h-1.5 bg-pink-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    </div>
+                </div>
+            `;
+            els.rubyChatBox.appendChild(div);
+            els.rubyChatBox.scrollTop = els.rubyChatBox.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const ind = document.getElementById('ruby-typing-indicator');
+            if(ind) ind.remove();
+        }
+
         els.rubySendBtn.addEventListener('click', async () => {
             const text = els.rubyInput.value.trim();
             if(!text) return;
@@ -1062,7 +1110,12 @@
             appendRubyMsg('user', text);
             els.rubySendBtn.disabled = true;
             
+            showTypingIndicator();
+            
             const reply = await fetchRubyResponse(text);
+            
+            removeTypingIndicator();
+            
             appendRubyMsg('ruby', reply);
             els.rubySendBtn.disabled = false;
         });
@@ -1371,11 +1424,20 @@
         function validateBet() { els.spinBtn.disabled = !(selectedColor && betAmount > 0 && playerBalance >= betAmount && !isSpinning && matchActive && activeTurn === 'player'); }
         
         function updateUI() {
+            const oldBankroll = els.gBankroll.textContent;
+            const newBankrollStr = `$${globalBankroll.toLocaleString()}`;
+            
+            if (oldBankroll !== newBankrollStr && oldBankroll !== "$100") {
+                els.gBankroll.classList.remove('bankroll-pulse');
+                void els.gBankroll.offsetWidth; // Trigger reflow to restart animation
+                els.gBankroll.classList.add('bankroll-pulse');
+            }
+
             els.pBalance.textContent = `$${Math.max(0, playerBalance).toLocaleString()}`;
             els.nBalance.textContent = `$${Math.max(0, npcBalance).toLocaleString()}`;
-            els.gBankroll.textContent = `$${globalBankroll.toLocaleString()}`;
-            els.mBankroll.textContent = `$${globalBankroll.toLocaleString()}`;
-            els.sBankroll.textContent = `$${globalBankroll.toLocaleString()}`;
+            els.gBankroll.textContent = newBankrollStr;
+            els.mBankroll.textContent = newBankrollStr;
+            els.sBankroll.textContent = newBankrollStr;
             els.rDisplay.textContent = `${currentRound} / ${TOTAL_ROUNDS}`;
             updateBetDisplay(); validateBet();
         }
@@ -1679,11 +1741,11 @@
 
         function addHistoryBadge(pocket) {
             const badge = document.createElement('div');
-            badge.className = `w-6 h-6 sm:w-8 sm:h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] sm:text-xs font-black border-2 shadow-[0_2px_5px_rgba(0,0,0,0.8)] ${
+            badge.className = `history-slide-in w-6 h-6 sm:w-8 sm:h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] sm:text-xs font-black border-2 shadow-[0_2px_5px_rgba(0,0,0,0.8)] ${
                 pocket.color === 'green' ? 'bg-emerald-700 text-white border-emerald-400' :
                 pocket.color === 'red' ? 'bg-red-800 text-white border-red-400' : 'bg-slate-900 text-gray-200 border-gray-500'
             }`;
-            badge.textContent = pocket.label;
+            badge.textContent = pocket.num;
             els.histContainer.insertBefore(badge, els.histContainer.firstChild);
             if (els.histContainer.children.length > 7) els.histContainer.removeChild(els.histContainer.lastChild);
         }
