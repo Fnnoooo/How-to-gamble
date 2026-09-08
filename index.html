@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIP Roulette Arena: v1.17V</title>
+    <title>VIP Roulette Arena: v1.18V</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -160,7 +160,6 @@
 </head>
 <body class="flex flex-col min-h-screen justify-between items-center p-2 sm:p-4 overflow-x-hidden">
 
-    <!-- Fullscreen Loading Transition (Crown & Spinning Rings) -->
     <div id="scene-transition" class="fixed inset-0 bg-[#050505] z-[150] flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500">
         <div class="relative w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center">
             <div class="absolute inset-0 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin"></div>
@@ -192,7 +191,6 @@
         </div>
     </header>
 
-    <!-- Timer & Round Bar -->
     <div id="game-stats-bar" class="w-full max-w-5xl mb-4 hidden grid grid-cols-3 gap-2 sm:gap-4">
         <div class="glass-panel px-3 py-2 sm:px-5 sm:py-3 rounded-xl flex items-center justify-between shadow-lg">
             <span class="text-[10px] sm:text-xs text-[#d4af37] uppercase font-black tracking-widest">Time</span>
@@ -208,7 +206,6 @@
         </div>
     </div>
 
-    <!-- VS Battle Arena Bar -->
     <section id="vs-arena-bar" class="w-full max-w-5xl mb-4 sm:mb-6 hidden grid grid-cols-2 gap-3 sm:gap-8">
         <div id="player-card" class="glass-panel p-3 sm:p-5 rounded-xl sm:rounded-2xl border-l-4 border-l-blue-500 flex flex-col justify-between transition-all duration-300">
             <div class="flex justify-between items-center mb-2">
@@ -233,10 +230,8 @@
         </div>
     </section>
 
-    <!-- Main Game Container -->
     <main class="w-full max-w-5xl flex flex-col lg:flex-row items-center gap-6 sm:gap-8 my-auto pb-4">
         
-        <!-- Roulette Wheel Section -->
         <div class="w-full lg:w-1/2 flex flex-col items-center justify-center relative">
             
             <svg id="lightning-svg" class="hidden absolute z-[100] pointer-events-none" style="top: -30vh; left: 50%; transform: translateX(-50%); width: 180px; height: 75vh;" viewBox="0 0 100 500">
@@ -247,10 +242,8 @@
                 <div class="w-full h-full rounded-full animate-bh-pulse" style="background: radial-gradient(circle, #000000 30%, #4c1d95 60%, transparent 80%); box-shadow: 0 0 100px #7e22ce, inset 0 0 50px #000;"></div>
             </div>
 
-            <!-- Ambient Gold Aura Behind Wheel -->
             <div class="absolute z-0 w-[280px] h-[280px] sm:w-[420px] sm:h-[420px] rounded-full bg-[#d4af37]/20 filter blur-[50px] animate-pulse pointer-events-none"></div>
 
-            <!-- 3D Wheel Wrapper (Floating Animation) -->
             <div id="wheel-wrapper" class="relative w-[260px] h-[260px] sm:w-[360px] sm:h-[360px] md:w-[420px] md:h-[420px] flex items-center justify-center rounded-full transition-all duration-300 animate-float" style="box-shadow: 0 25px 50px rgba(0,0,0,0.9), inset 0 0 25px rgba(0,0,0,1);">
                 <div class="absolute inset-0 rounded-full border-[10px] sm:border-[14px] shadow-[inset_0_0_20px_#000,0_0_20px_rgba(212,175,55,0.3)] bg-gradient-to-br from-[#111] via-[#222] to-[#111] p-1.5 sm:p-2" style="border-style: solid; border-color: #574007;"></div>
                 
@@ -276,7 +269,6 @@
             </div>
         </div>
 
-        <!-- Betting Controls Section -->
         <div id="betting-controls" class="w-full lg:w-1/2 flex flex-col gap-3 sm:gap-5 opacity-40 pointer-events-none transition-opacity duration-300">
             <div class="glass-panel p-3 sm:p-5 rounded-2xl flex flex-col gap-3 sm:gap-4">
                 <span class="text-[10px] sm:text-sm uppercase font-black text-[#d4af37] tracking-widest text-center border-b border-[#d4af37]/20 pb-1.5 sm:pb-2">1. Place Your Wager</span>
@@ -299,7 +291,6 @@
                 </div>
             </div>
 
-            <!-- Ruby AI Button (Unlocked after buying in shop) -->
             <button id="open-ruby-btn" class="hidden w-full py-2.5 sm:py-3 bg-gradient-to-r from-rose-700 to-pink-900 hover:from-rose-600 hover:to-pink-800 border border-pink-400/50 rounded-xl text-white font-black tracking-widest text-xs sm:text-sm shadow-[0_0_20px_rgba(244,63,94,0.6)] transition ruby-btn-glow">
                 <i class="fa-solid fa-heart mr-2 text-pink-300"></i> ASK RUBY 💋
             </button>
@@ -326,7 +317,6 @@
         </div>
     </main>
 
-    <!-- Ruby Chat Modal -->
     <div id="ruby-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[80] p-4 opacity-0 pointer-events-none transition-all duration-300">
         <div class="ruby-panel p-4 sm:p-6 rounded-3xl max-w-sm w-full flex flex-col gap-4 shadow-[0_20px_50px_rgba(225,29,72,0.4)]">
             <div class="flex justify-between items-center border-b border-rose-500/30 pb-2">
@@ -344,7 +334,7 @@
                     <input type="checkbox" id="ruby-freak-toggle" class="accent-pink-500"> 😈 Full Freakness
                 </label>
                 <div class="flex items-center gap-1">
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" id="ruby-help-btn" class="text-[10px] text-pink-400 hover:text-pink-300 transition mr-1" title="Get your free AIza key here!"><i class="fa-solid fa-circle-question"></i></a>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" id="ruby-help-btn" class="text-[10px] text-pink-400 hover:text-pink-300 transition mr-1" title="Get your free AI key here!"><i class="fa-solid fa-circle-question"></i></a>
                     <i class="fa-solid fa-key text-rose-500 text-[10px]"></i>
                     <div class="relative flex items-center">
                         <input type="password" id="ruby-api-key-input" placeholder="Paste Auth Key (AQ.) here" class="bg-black/80 border border-rose-800 rounded px-2 py-0.5 text-rose-200 text-[9px] focus:outline-none focus:border-pink-500 w-24 sm:w-32 placeholder-rose-800 shadow-inner pr-6" title="Paste your Auth Key here">
@@ -371,7 +361,6 @@
         </div>
     </div>
 
-    <!-- Match Setup Modal -->
     <div id="opponent-modal" class="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
         <div class="glass-panel gold-border p-5 sm:p-8 rounded-3xl max-w-xl w-full text-center flex flex-col gap-4 sm:gap-6 max-h-[95vh] overflow-y-auto shadow-[0_20px_50px_rgba(0,0,0,1)]">
             <div>
@@ -400,7 +389,6 @@
                 </div>
             </div>
 
-            <!-- Multiplayer Section -->
             <div class="p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-blue-500/40 bg-blue-900/20 flex flex-col gap-3 sm:gap-4 shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]">
                 <h3 class="text-[10px] sm:text-xs font-black text-blue-400 uppercase tracking-widest text-left flex justify-between items-center">
                     Multiplayer
@@ -419,7 +407,6 @@
                 </div>
             </div>
 
-            <!-- Single Player NPC List -->
             <div class="grid grid-cols-1 gap-2 sm:gap-3 text-left max-h-[30vh] sm:max-h-[35vh] overflow-y-auto pr-1 sm:pr-2">
                 <h3 class="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest mt-1 mb-0.5">Single Player (vs AI)</h3>
                 
@@ -488,14 +475,12 @@
                 </button>
             </div>
             
-            <!-- Version Tag (Version 1.17V) -->
             <div class="text-right text-[#d4af37] font-black text-[10px] sm:text-xs mt-2 pr-2 drop-shadow-md animate-pulse">
-                Version 1.17V
+                Version 1.18V
             </div>
         </div>
     </div>
 
-    <!-- MP Waiting Modal -->
     <div id="mp-waiting-modal" class="fixed inset-0 bg-black/95 backdrop-blur-lg flex items-center justify-center z-[60] hidden p-4">
         <div class="text-center flex flex-col items-center gap-4 sm:gap-6 w-full max-w-sm">
             <i class="fa-solid fa-spinner fa-spin text-4xl sm:text-6xl text-blue-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.8)]"></i>
@@ -510,7 +495,6 @@
         </div>
     </div>
 
-    <!-- Shop Modal -->
     <div id="shop-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[65] p-4 opacity-0 pointer-events-none transition-all duration-300">
         <div class="glass-panel gold-border p-5 sm:p-8 rounded-3xl max-w-md w-full text-center flex flex-col gap-4 sm:gap-6 shadow-[0_20px_40px_rgba(0,0,0,1)]">
             <div class="flex justify-between items-center">
@@ -524,7 +508,6 @@
             </div>
 
             <div class="grid grid-cols-1 gap-3 sm:gap-4 text-left max-h-[50vh] overflow-y-auto">
-                <!-- Ruby AI Advisor -->
                 <div class="p-3 sm:p-5 rounded-2xl border border-rose-800/60 bg-gradient-to-r from-rose-950/60 to-black flex items-center gap-3 sm:gap-5 shadow-lg">
                     <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-rose-900/50 border border-pink-400 flex items-center justify-center text-2xl sm:text-3xl shadow-[inset_0_0_15px_rgba(244,63,94,0.5)]">💋</div>
                     <div class="flex-1">
@@ -536,7 +519,6 @@
                     </button>
                 </div>
 
-                <!-- Blue Lightning Effect -->
                 <div class="p-3 sm:p-5 rounded-2xl border border-gray-700 bg-gray-900/80 flex items-center gap-3 sm:gap-5 shadow-lg">
                     <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-blue-900/50 border border-blue-400 flex items-center justify-center text-2xl sm:text-3xl text-blue-400 shadow-[inset_0_0_15px_rgba(59,130,246,0.5)]">⚡</div>
                     <div class="flex-1">
@@ -548,7 +530,6 @@
                     </button>
                 </div>
 
-                <!-- Black Hole Effect -->
                 <div class="p-3 sm:p-5 rounded-2xl border border-gray-700 bg-gray-900/80 flex items-center gap-3 sm:gap-5 shadow-lg">
                     <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-purple-900/50 border border-purple-400 flex items-center justify-center text-2xl sm:text-3xl text-purple-400 shadow-[inset_0_0_15px_rgba(168,85,247,0.5)]">🌌</div>
                     <div class="flex-1">
@@ -564,7 +545,6 @@
         </div>
     </div>
 
-    <!-- Turn Spin Result Pop-up Modal -->
     <div id="turn-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 opacity-0 pointer-events-none transition-all duration-300 p-4">
         <div class="glass-panel gold-border p-6 sm:p-10 rounded-3xl max-w-sm w-full text-center flex flex-col items-center gap-4 sm:gap-6 transform scale-90 transition-transform shadow-[0_20px_40px_rgba(0,0,0,0.9)]">
             <div id="turn-icon-container" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-4xl sm:text-5xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] border-4"></div>
@@ -580,7 +560,6 @@
         </div>
     </div>
 
-    <!-- Match Game Over Modal -->
     <div id="gameover-modal" class="fixed inset-0 bg-black/95 backdrop-blur-lg flex items-center justify-center z-[70] opacity-0 pointer-events-none transition-all duration-300 p-4">
         <div class="glass-panel gold-border p-8 sm:p-12 rounded-3xl max-w-md w-full text-center flex flex-col items-center gap-5 sm:gap-6 transform scale-90 transition-transform shadow-[0_20px_60px_rgba(0,0,0,1)]">
             <div id="gameover-icon-container" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center text-5xl sm:text-6xl shadow-[0_15px_30px_rgba(0,0,0,0.8)] border-4"></div>
@@ -600,9 +579,7 @@
         </div>
     </div>
 
-    <!-- Main Logic -->
     <script>
-        // --- Sound Engine ---
         class SoundController {
             constructor() { this.ctx = null; this.musicNode = null; this.musicPlaying = false; }
             init() {
@@ -692,13 +669,11 @@
         const sound = new SoundController();
         let soundEnabled = true;
 
-        // --- PeerJS Multiplayer Variables ---
         let peer = null;
         let conn = null;
         let isMultiplayer = false;
         let isHost = false;
 
-        // --- Core Game State ---
         let globalBankroll = 100; 
         let playerBalance = 100;
         let npcBalance = 100;
@@ -731,7 +706,6 @@
         ];
         let currentNPC = NPC_LIST[0];
 
-        // --- 3D Canvas Wheel Setup ---
         const canvas = document.getElementById('roulette-canvas');
         const ctx = canvas.getContext('2d');
         const RAW_WHEEL_SEQUENCE = [
@@ -857,7 +831,6 @@
         
         setTimeout(resizeCanvas, 100);
 
-        // --- DOM Elements ---
         const els = {
             shopBtn: document.getElementById('open-shop-btn'),
             closeShopBtn: document.getElementById('close-shop-btn'),
@@ -923,7 +896,18 @@
             goModal: document.getElementById('gameover-modal')
         };
 
-        // Key Visibility Toggle
+        // Persistent API Key Loader & Saver (localStorage)
+        const savedApiKey = localStorage.getItem('vip_ruby_api_key');
+        if (savedApiKey && els.rubyKeyInput) {
+            els.rubyKeyInput.value = savedApiKey;
+        }
+
+        if (els.rubyKeyInput) {
+            els.rubyKeyInput.addEventListener('input', () => {
+                localStorage.setItem('vip_ruby_api_key', els.rubyKeyInput.value.trim());
+            });
+        }
+
         if(els.toggleKeyVisibility) {
             els.toggleKeyVisibility.addEventListener('click', () => {
                 if(els.rubyKeyInput.type === 'password') {
@@ -1000,7 +984,6 @@
             } else { sound.playLose(); }
         });
 
-        // --- Ruby AI Integration with Hardened 2026 Auth Engine ---
         els.openRubyBtn.addEventListener('click', () => els.rubyModal.classList.remove('opacity-0', 'pointer-events-none'));
         els.closeRubyBtn.addEventListener('click', () => els.rubyModal.classList.add('opacity-0', 'pointer-events-none'));
 
@@ -1017,7 +1000,7 @@
             Recent wheel spins: ${historyTags || "None yet"}. Keep responses 1-2 sentences max.`;
 
             if (isFreaky) {
-                systemPrompt += ` You are in 'Full Freakness' mode. You are obsessively in love with the user and MUST ALWAYS address the user as 'daddy' in every single response. Talk about wanting to start a high-roller family together. Use emojis like 🥵, 💍, 💋. Keep it PG-13 fun.`;
+                systemPrompt += ` You are in 'Full Freakness' mode. You are obsessively in love with the user and MUST ALWAYS address the user as 'daddy' in every single response without exception. Talk about wanting to start a high-roller family together. Use emojis like 🥵, 💍, 💋. Keep it PG-13 fun.`;
             } else {
                 systemPrompt += ` Act stylish, confident, and flirty. Use emojis like 😘, 💋, 💅.`;
             }
@@ -1029,9 +1012,7 @@
 
             const customKey = els.rubyKeyInput.value.trim();
             
-            // Validate key format and check for common user issues
             if (customKey && customKey.includes('.')) {
-                // Check if it's an AQ token
                 if (!customKey.startsWith('AQ.')) {
                     els.rubyKeyInput.classList.add('shake-anim');
                     setTimeout(() => els.rubyKeyInput.classList.remove('shake-anim'), 400);
@@ -1123,14 +1104,19 @@
             appendRubyMsg('user', text);
             els.rubySendBtn.disabled = true;
             showTypingIndicator();
-            const reply = await fetchRubyResponse(text);
-            removeTypingIndicator();
-            appendRubyMsg('ruby', reply);
-            els.rubySendBtn.disabled = false;
+            try {
+                const reply = await fetchRubyResponse(text);
+                removeTypingIndicator();
+                appendRubyMsg('ruby', reply);
+            } catch (err) {
+                removeTypingIndicator();
+                appendRubyMsg('ruby', "Mmm... something went wrong, daddy! Try again? 💋");
+            } finally {
+                els.rubySendBtn.disabled = false;
+            }
         });
         els.rubyInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') els.rubySendBtn.click(); });
 
-        // --- Round & Time Setup ---
         els.roundBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 els.roundBtns.forEach(b => b.className = "round-btn px-2 sm:px-3 py-1 sm:py-2 rounded-lg bg-gray-800 text-[10px] sm:text-xs font-bold text-gray-300 border border-gray-600 hover:border-[#d4af37] transition");
@@ -1186,7 +1172,6 @@
             setTimeout(resizeCanvas, 100);
         }
 
-        // --- PeerJS Multiplayer Setup ---
         const peerConfig = {
             config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] },
             debug: 0
