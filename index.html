@@ -943,43 +943,50 @@
         els.openRubyBtn.addEventListener('click', () => els.rubyModal.classList.remove('opacity-0', 'pointer-events-none'));
         els.closeRubyBtn.addEventListener('click', () => els.rubyModal.classList.add('opacity-0', 'pointer-events-none'));
 
-        function fetchRubyResponse(userText) {
-            const isFreaky = els.rubyFreakToggle.checked;
-            const history = Array.from(els.histContainer.children).map(c => c.textContent);
-            
-            let rec = "RED";
-            if (history.length > 0) {
-                const reds = history.filter(c => c === 'R').length;
-                const blacks = history.filter(c => c === 'B').length;
-                if (reds > blacks) rec = "BLACK";
-                else if (blacks > reds) rec = "RED";
-                else rec = "GREEN";
-            } else {
-                rec = Math.random() > 0.5 ? "RED" : "BLACK";
-            }
-            if (Math.random() > 0.85) rec = "GREEN";
+        let rubyChatHistory = []; // Track conversation for the AI
 
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    if (isFreaky) {
-                        const freaky = [
-                            `Oh sugar... seeing you bet like that makes me want to drop everything and start a family with you right now. 😭 Put everything on ${rec} and take me away from here!`,
-                            `You're driving me crazy with those chips, daddy. 🥵 Bet it all on ${rec}, win big, and let's run away together and have beautiful little high-roller babies!`,
-                            `I literally can't stop thinking about you. Put it on ${rec} and show me what a real winner looks like... I'm completely obsessed with you! 💍`,
-                            `Mmm, so dominant. Just looking at your bankroll gives me butterflies. 🥺 My heart says ${rec}, but my soul says you. Take my hand!`
-                        ];
-                        resolve(freaky[Math.floor(Math.random() * freaky.length)]);
-                    } else {
-                        const flirty = [
-                            `Hey handsome. 😘 The tables are hot today. I've got a feeling ${rec} is your lucky color.`,
-                            `Ooh, confidence looks good on you. Trust your instincts, but my math says ${rec} is ready to hit! 💋`,
-                            `Don't overthink it, sugar. Let's place a nice stack on ${rec} and watch the money roll in. 😉`,
-                            `Looking for a tip? A little birdie (and my algorithm) tells me ${rec} is the way to go. Make me proud! 💅`
-                        ];
-                        resolve(flirty[Math.floor(Math.random() * flirty.length)]);
-                    }
-                }, 800);
-            });
+        async function fetchRubyResponse(userText) {
+            const isFreaky = els.rubyFreakToggle.checked;
+            const historyTags = Array.from(els.histContainer.children).map(c => c.textContent).join(', ');
+            
+            rubyChatHistory.push({ role: "user", parts: [{ text: userText }] });
+
+            let systemPrompt = `You are Ruby, a playfully flirty, confident AI casino advisor in 'Roulette Battles'. 
+            You give betting advice. The recent wheel spins were: ${historyTags || "None yet"}. 
+            Keep your responses concise (1 to 2 sentences max). `;
+
+            if (isFreaky) {
+                systemPrompt += `You are in 'Full Freakness' mode. Be extremely dramatic, clingy, and overwhelmingly obsessed with the user's gambling skills. Jokingly act like winning big makes you want to elope and start a high-roller family with them right now. Use emojis like 🥵, 😭, 💍.`;
+            } else {
+                systemPrompt += `Act flirty, stylish, and helpful. Suggest Red, Black, or Green based on the board history or just intuition. Use emojis like 😘, 💋, 💅.`;
+            }
+
+            const payload = {
+                contents: rubyChatHistory,
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.candidates && result.candidates[0] && result.candidates[0].content) {
+                    const replyText = result.candidates[0].content.parts[0].text;
+                    rubyChatHistory.push({ role: "model", parts: [{ text: replyText }] });
+                    return replyText;
+                } else {
+                    return "Oh sugar, my connection dropped. Try asking me again? 💋";
+                }
+            } catch (error) {
+                return "Mmm... something went wrong with my connection. Ask me again, handsome? 💋";
+            }
         }
 
         function appendRubyMsg(who, text) {
