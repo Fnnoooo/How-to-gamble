@@ -438,7 +438,7 @@
             
             <!-- Version Tag -->
             <div class="text-right text-gray-600 font-bold text-[10px] sm:text-xs mt-2 pr-2">
-                Version 1.03V
+                Version 1.04V
             </div>
         </div>
     </div>
@@ -949,20 +949,23 @@
             const isFreaky = els.rubyFreakToggle.checked;
             const historyTags = Array.from(els.histContainer.children).map(c => c.textContent).join(', ');
             
-            rubyChatHistory.push({ role: "user", parts: [{ text: userText }] });
+            // Create a temporary history payload. We only push to persistent history IF the request succeeds!
+            // This completely stops the "connection dropped" permanent loop bug caused by two consecutive User roles.
+            const currentTurn = { role: "user", parts: [{ text: userText }] };
+            const payloadContents = [...rubyChatHistory, currentTurn];
 
             let systemPrompt = `You are Ruby, a playfully flirty, confident AI casino advisor in 'Roulette Battles'. 
             You give betting advice. The recent wheel spins were: ${historyTags || "None yet"}. 
             Keep your responses concise (1 to 2 sentences max). `;
 
             if (isFreaky) {
-                systemPrompt += `You are in 'Full Freakness' mode. Be extremely dramatic, clingy, and overwhelmingly obsessed with the user's gambling skills. Jokingly act like winning big makes you want to elope and start a high-roller family with them right now. You must ALWAYS address the user as 'daddy' in this mode. Keep the tone humorous and exaggerated so as not to trigger explicit filters. Use emojis like 🥵, 😭, 💍.`;
+                systemPrompt += `You are in 'Full Freakness' mode. Be extremely dramatic, clingy, and overwhelmingly obsessed with the user's gambling skills. Jokingly act like winning big makes you want to elope and start a high-roller family with them right now. You MUST ALWAYS address the user as 'daddy' in this mode. Start almost every response with 'daddy'. Keep the tone humorous and exaggerated so as not to trigger explicit filters. Use emojis like 🥵, 😭, 💍.`;
             } else {
                 systemPrompt += `Act flirty, stylish, and helpful. Suggest Red, Black, or Green based on the board history or just intuition. Use emojis like 😘, 💋, 💅.`;
             }
 
             const payload = {
-                contents: rubyChatHistory,
+                contents: payloadContents,
                 systemInstruction: { parts: [{ text: systemPrompt }] }
             };
 
@@ -977,10 +980,19 @@
                 });
                 const result = await response.json();
 
+                if (result.error) {
+                    console.error("Ruby API Error:", result.error);
+                    return "Oh sugar, my connection dropped due to network traffic! Try asking me again? 💋";
+                }
+
                 if (result.candidates && result.candidates[0]) {
                     if (result.candidates[0].content) {
                         const replyText = result.candidates[0].content.parts[0].text;
+                        
+                        // Success! Safely log the alternating conversation to her memory
+                        rubyChatHistory.push(currentTurn);
                         rubyChatHistory.push({ role: "model", parts: [{ text: replyText }] });
+                        
                         return replyText;
                     } else if (result.candidates[0].finishReason) {
                         return `Oh sugar, I'm feeling a bit too flushed to say that right now... 🥵💋`;
