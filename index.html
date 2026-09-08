@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIP Roulette Arena: v1.10V</title>
+    <title>VIP Roulette Arena: v1.13V</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -151,6 +151,13 @@
             100% { transform: scale(1); filter: brightness(1); }
         }
         .bankroll-pulse { animation: bankroll-pop 0.4s ease-out; }
+        
+        @keyframes shake-error {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake-anim { animation: shake-error 0.4s ease-in-out; border-color: #ef4444 !important; background-color: rgba(127, 29, 29, 0.4) !important; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen justify-between items-center p-2 sm:p-4 overflow-x-hidden">
@@ -343,7 +350,7 @@
                 <div class="flex items-center gap-1">
                     <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] text-pink-400 hover:text-pink-300 transition mr-1" title="Get your free AIza key here!"><i class="fa-solid fa-circle-question"></i></a>
                     <i class="fa-solid fa-key text-rose-500 text-[10px]"></i>
-                    <input type="password" id="ruby-api-key-input" placeholder="Paste AIzaSy... key here" class="bg-black/80 border border-rose-800 rounded px-2 py-0.5 text-rose-200 text-[9px] focus:outline-none focus:border-pink-500 w-28 sm:w-36 placeholder-rose-800 shadow-inner" title="Paste your Gemini API key here if playing in a new tab">
+                    <input type="password" id="ruby-api-key-input" placeholder="AQ.Ab8RN6KQXFzMi4CwvUt3WyEZ5wT1hNzYgUUXasuSkIT9ewf0Ag" class="bg-black/80 border border-rose-800 rounded px-2 py-0.5 text-rose-200 text-[9px] focus:outline-none focus:border-pink-500 w-28 sm:w-36 placeholder-rose-800 shadow-inner" title="Paste your Gemini Auth Key here if playing in a new tab">
                 </div>
             </div>
 
@@ -484,7 +491,7 @@
             
             <!-- Version Tag -->
             <div class="text-right text-[#d4af37] font-black text-[10px] sm:text-xs mt-2 pr-2 drop-shadow-md animate-pulse">
-                Version 1.11V
+                Version 1.13V
             </div>
         </div>
     </div>
@@ -1013,27 +1020,34 @@
                 systemInstruction: { parts: [{ text: systemPrompt }] }
             };
 
-            let apiKey = "AQ.Ab8RN6LC8PJJTCezv_pDu6OVEhJh4mU8dBqvALLdZoDfp7fCRA";
-            const customKey = document.getElementById('ruby-api-key-input').value.trim();
-            if (customKey) apiKey = customKey;
+            const keyInputEl = document.getElementById('ruby-api-key-input');
+            const customKey = keyInputEl.value.trim();
+            
+            let apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent`;
+            let headers = { 'Content-Type': 'application/json' };
 
-            // Intelligent Key Detection
-            if (apiKey.startsWith("AQ.")) {
-                return "Oh honey... that text starting with 'AQ.' is a Google login cookie, not an API key! You have to click the blue 'Create API key' button on the website! 💋";
+            // 2026 Auth Key Migration Support
+            if (customKey) {
+                if (customKey.startsWith("AIza")) {
+                    apiUrl += `?key=${customKey}`;
+                } else {
+                    // It's the new Auth Key format (AQ. etc.)
+                    headers['Authorization'] = `Bearer ${customKey}`;
+                }
+            } else {
+                apiUrl += `?key=`; // Fallback for the preview environment
             }
-
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: headers,
                     body: JSON.stringify(payload)
                 });
                 
                 if (!response.ok) {
-                    if (response.status === 403) {
-                        return "Oh daddy... a 403 error means my API key is missing! 😭 If you opened the game in a new tab or downloaded the file, the built-in system key won't work. You'll need to paste your own Google API key in the code to talk to me! 💋🔥";
+                    if (response.status === 401 || response.status === 403) {
+                        return "Oh daddy... a 401/403 error means my key isn't working! 😭 Make sure your new Auth Key is active. 💋🔥";
                     }
                     const errText = await response.text();
                     console.error("HTTP Error:", response.status, errText);
@@ -1044,7 +1058,7 @@
 
                 if (result.error) {
                     console.error("Ruby API Error:", result.error);
-                    return `Oh sugar, the API said: ${result.error.message || "Unknown Error"}! 💋`;
+                    return `Big daddy, the API said: ${result.error.message || "Unknown Error"}! 💋`;
                 }
 
                 if (result.candidates && result.candidates[0]) {
@@ -1060,7 +1074,7 @@
                         return `Oh sugar, I'm feeling a bit too flushed to say that right now... (Filter: ${result.candidates[0].finishReason}) 🥵💋`;
                     }
                 }
-                return "Oh sugar, I got an empty response! Try asking me again? 💋";
+                return "Daddy, I got an empty response! Try asking me again? 💋";
             } catch (error) {
                 console.error("Fetch Error:", error);
                 return `Mmm... my connection failed: ${error.message}. Ask me again, handsome? 💋`;
