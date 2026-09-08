@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIP Roulette Arena: v1.15V</title>
+    <title>VIP Roulette Arena: v1.16V</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -346,7 +346,10 @@
                 <div class="flex items-center gap-1">
                     <a href="https://aistudio.google.com/app/apikey" target="_blank" id="ruby-help-btn" class="text-[10px] text-pink-400 hover:text-pink-300 transition mr-1" title="Get your free AIza key here!"><i class="fa-solid fa-circle-question"></i></a>
                     <i class="fa-solid fa-key text-rose-500 text-[10px]"></i>
-                    <input type="password" id="ruby-api-key-input" placeholder="Paste Auth Key (AQ.) here" class="bg-black/80 border border-rose-800 rounded px-2 py-0.5 text-rose-200 text-[9px] focus:outline-none focus:border-pink-500 w-28 sm:w-36 placeholder-rose-800 shadow-inner" title="Paste your Auth Key here">
+                    <div class="relative flex items-center">
+                        <input type="password" id="ruby-api-key-input" placeholder="Paste Auth Key (AQ.) here" class="bg-black/80 border border-rose-800 rounded px-2 py-0.5 text-rose-200 text-[9px] focus:outline-none focus:border-pink-500 w-24 sm:w-32 placeholder-rose-800 shadow-inner pr-6" title="Paste your Auth Key here">
+                        <button id="toggle-key-visibility" class="absolute right-1 text-rose-400 hover:text-white text-[9px]"><i class="fa-solid fa-eye"></i></button>
+                    </div>
                 </div>
             </div>
 
@@ -485,9 +488,9 @@
                 </button>
             </div>
             
-            <!-- Version Tag (Version 1.14V) -->
+            <!-- Version Tag (Version 1.16V) -->
             <div class="text-right text-[#d4af37] font-black text-[10px] sm:text-xs mt-2 pr-2 drop-shadow-md animate-pulse">
-                Version 1.14V
+                Version 1.16V
             </div>
         </div>
     </div>
@@ -870,6 +873,7 @@
             rubySendBtn: document.getElementById('ruby-send-btn'),
             rubyFreakToggle: document.getElementById('ruby-freak-toggle'),
             rubyKeyInput: document.getElementById('ruby-api-key-input'),
+            toggleKeyVisibility: document.getElementById('toggle-key-visibility'),
             rubyHelpBtn: document.getElementById('ruby-help-btn'),
             roundBtns: document.querySelectorAll('.round-btn'),
             timeBtns: document.querySelectorAll('.time-btn'),
@@ -918,6 +922,19 @@
             turnModal: document.getElementById('turn-modal'),
             goModal: document.getElementById('gameover-modal')
         };
+
+        // Key Visibility Toggle
+        if(els.toggleKeyVisibility) {
+            els.toggleKeyVisibility.addEventListener('click', () => {
+                if(els.rubyKeyInput.type === 'password') {
+                    els.rubyKeyInput.type = 'text';
+                    els.toggleKeyVisibility.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+                } else {
+                    els.rubyKeyInput.type = 'password';
+                    els.toggleKeyVisibility.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                }
+            });
+        }
 
         function showNotification(msg) {
             const toast = document.createElement('div');
@@ -1015,7 +1032,6 @@
             let headers = { 'Content-Type': 'application/json' };
 
             if (customKey) {
-                // Fixed: AQ. keys are native API keys, so pass them via query param or x-goog-api-key, not Bearer token!
                 apiUrl += `?key=${customKey}`;
                 headers['x-goog-api-key'] = customKey;
             }
@@ -1030,7 +1046,7 @@
                 if (!response.ok) {
                     const errText = await response.text();
                     console.error("API Error:", response.status, errText);
-                    return `Mmm... server sent status ${response.status}. Check if your Auth Key (AQ.) is valid, handsome? 💋`;
+                    return `Mmm... server sent status ${response.status}. Check your Auth Key, handsome? 💋`;
                 }
 
                 const result = await response.json();
@@ -1070,12 +1086,11 @@
             div.innerHTML = `
                 <span class="text-[10px] text-pink-500 font-bold ml-1">Ruby</span>
                 <div class="bg-rose-900/40 border border-pink-500/20 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm flex items-center justify-center">
-            <!-- Version Tag (Version 1.15V) -->
-            <div class="text-right text-[#d4af37] font-black text-[10px] sm:text-xs mt-2 pr-2 drop-shadow-md animate-pulse">
-                Version 1.15V
-            </div>
-        </div>
-    </div>
+                    <div class="flex gap-1">
+                        <div class="w-1.5 h-1.5 bg-pink-400 rounded-full animate-bounce"></div>
+                        <div class="w-1.5 h-1.5 bg-pink-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                        <div class="w-1.5 h-1.5 bg-pink-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                    </div>
                 </div>
             `;
             els.rubyChatBox.appendChild(div);
