@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIP Roulette Arena: v1.02</title>
+    <title>VIP Roulette Arena: v1.05V</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -104,6 +104,24 @@
 
         .active-turn-ring { box-shadow: 0 0 25px rgba(212, 175, 55, 0.4); border-color: #d4af37 !important; }
 
+        /* Version 1.05V UI Additions */
+        @keyframes float-wheel {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float-wheel 5s ease-in-out infinite; }
+        
+        .shimmer-text {
+            background: linear-gradient(90deg, #fff7d6 0%, #d4af37 50%, #fff7d6 100%);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            animation: shimmer 3s linear infinite;
+            text-shadow: 0px 4px 10px rgba(0,0,0,0.8);
+        }
+        @keyframes shimmer { to { background-position: 200% center; } }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.6); }
         ::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.7); border-radius: 4px; }
@@ -134,7 +152,7 @@
                 <i class="fa-solid fa-crown text-xl sm:text-2xl"></i>
             </div>
             <div>
-                <h1 class="font-serif-title text-xl sm:text-4xl font-black gold-gradient-text drop-shadow-lg">ROULETTE BATTLES</h1>
+                <h1 class="font-serif-title text-xl sm:text-4xl font-black shimmer-text drop-shadow-lg">ROULETTE BATTLES</h1>
                 <p class="text-xs sm:text-base text-gray-400 font-bold tracking-wide">Global Bankroll: <span id="global-bankroll" class="text-[#d4af37] drop-shadow-md font-black">$100</span></p>
             </div>
         </div>
@@ -205,7 +223,7 @@
             </div>
 
             <!-- Highly Realistic 3D Wheel Wrapper (Lag Fixed) -->
-            <div id="wheel-wrapper" class="relative w-[260px] h-[260px] sm:w-[360px] sm:h-[360px] md:w-[420px] md:h-[420px] flex items-center justify-center rounded-full transition-all duration-300" style="box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,1);">
+            <div id="wheel-wrapper" class="relative w-[260px] h-[260px] sm:w-[360px] sm:h-[360px] md:w-[420px] md:h-[420px] flex items-center justify-center rounded-full transition-all duration-300 animate-float" style="box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,1);">
                 <!-- Premium Gold Outer Bezel -->
                 <div class="absolute inset-0 rounded-full border-[10px] sm:border-[14px] shadow-[inset_0_0_20px_#000,0_0_15px_rgba(212,175,55,0.2)] bg-gradient-to-br from-[#111] via-[#222] to-[#111] p-1.5 sm:p-2" style="border-style: solid; border-color: #574007;"></div>
                 
@@ -438,7 +456,7 @@
             
             <!-- Version Tag -->
             <div class="text-right text-gray-600 font-bold text-[10px] sm:text-xs mt-2 pr-2">
-                Version 1.04V
+                Version 1.05V
             </div>
         </div>
     </div>
@@ -949,8 +967,6 @@
             const isFreaky = els.rubyFreakToggle.checked;
             const historyTags = Array.from(els.histContainer.children).map(c => c.textContent).join(', ');
             
-            // Create a temporary history payload. We only push to persistent history IF the request succeeds!
-            // This completely stops the "connection dropped" permanent loop bug caused by two consecutive User roles.
             const currentTurn = { role: "user", parts: [{ text: userText }] };
             const payloadContents = [...rubyChatHistory, currentTurn];
 
@@ -978,15 +994,22 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+                
+                if (!response.ok) {
+                    const errText = await response.text();
+                    console.error("HTTP Error:", response.status, errText);
+                    return `Mmm... the server sent a ${response.status} error! Tell the dev: ${errText.substring(0, 80)} 💋`;
+                }
+
                 const result = await response.json();
 
                 if (result.error) {
                     console.error("Ruby API Error:", result.error);
-                    return "Oh sugar, my connection dropped due to network traffic! Try asking me again? 💋";
+                    return `Oh sugar, the API said: ${result.error.message || "Unknown Error"}! 💋`;
                 }
 
                 if (result.candidates && result.candidates[0]) {
-                    if (result.candidates[0].content) {
+                    if (result.candidates[0].content && result.candidates[0].content.parts) {
                         const replyText = result.candidates[0].content.parts[0].text;
                         
                         // Success! Safely log the alternating conversation to her memory
@@ -995,12 +1018,13 @@
                         
                         return replyText;
                     } else if (result.candidates[0].finishReason) {
-                        return `Oh sugar, I'm feeling a bit too flushed to say that right now... 🥵💋`;
+                        return `Oh sugar, I'm feeling a bit too flushed to say that right now... (Filter: ${result.candidates[0].finishReason}) 🥵💋`;
                     }
                 }
-                return "Oh sugar, my connection dropped. Try asking me again? 💋";
+                return "Oh sugar, I got an empty response! Try asking me again? 💋";
             } catch (error) {
-                return "Mmm... something went wrong with my connection. Ask me again, handsome? 💋";
+                console.error("Fetch Error:", error);
+                return `Mmm... my connection failed: ${error.message}. Ask me again, handsome? 💋`;
             }
         }
 
