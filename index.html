@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIP Roulette Arena: v1.05V</title>
+    <title>VIP Roulette Arena: v1.06V</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -103,6 +103,12 @@
         .glow-green { animation: pulse-green 2s infinite; }
 
         .active-turn-ring { box-shadow: 0 0 25px rgba(212, 175, 55, 0.4); border-color: #d4af37 !important; }
+
+        @keyframes ruby-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); border-color: rgba(244, 63, 94, 0.5); }
+            50% { box-shadow: 0 0 35px rgba(244, 63, 94, 0.9); border-color: rgba(244, 63, 94, 0.9); }
+        }
+        .ruby-btn-glow { animation: ruby-glow 2s infinite; }
 
         /* Version 1.05V UI Additions */
         @keyframes float-wheel {
@@ -274,7 +280,7 @@
             </div>
 
             <!-- Ruby AI Button (Dynamically shown) -->
-            <button id="open-ruby-btn" class="hidden w-full py-2.5 sm:py-3 bg-gradient-to-r from-rose-700 to-pink-900 hover:from-rose-600 hover:to-pink-800 border border-pink-400/50 rounded-xl text-white font-black tracking-widest text-xs sm:text-sm shadow-[0_0_15px_rgba(244,63,94,0.4)] transition">
+            <button id="open-ruby-btn" class="hidden w-full py-2.5 sm:py-3 bg-gradient-to-r from-rose-700 to-pink-900 hover:from-rose-600 hover:to-pink-800 border border-pink-400/50 rounded-xl text-white font-black tracking-widest text-xs sm:text-sm shadow-[0_0_15px_rgba(244,63,94,0.4)] transition ruby-btn-glow">
                 <i class="fa-solid fa-heart mr-2 text-pink-300"></i> ASK RUBY 💋
             </button>
 
@@ -455,8 +461,8 @@
             </div>
             
             <!-- Version Tag -->
-            <div class="text-right text-gray-600 font-bold text-[10px] sm:text-xs mt-2 pr-2">
-                Version 1.05V
+            <div class="text-right text-[#d4af37] font-black text-[10px] sm:text-xs mt-2 pr-2 drop-shadow-md animate-pulse">
+                Version 1.06V
             </div>
         </div>
     </div>
@@ -985,7 +991,7 @@
                 systemInstruction: { parts: [{ text: systemPrompt }] }
             };
 
-            const apiKey = "";
+            const apiKey = "AQ.Ab8RN6Lq4efJkUs2CcZgsx_8NZYyN99YK6YhD2aX8lA6gt0qaw";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
             try {
@@ -996,6 +1002,9 @@
                 });
                 
                 if (!response.ok) {
+                    if (response.status === 403) {
+                        return "Oh daddy... a 403 error means my API key is missing! 😭 If you opened the game in a new tab or downloaded the file, the built-in system key won't work. You'll need to paste your own Google API key in the code to talk to me! 💋🔥";
+                    }
                     const errText = await response.text();
                     console.error("HTTP Error:", response.status, errText);
                     return `Mmm... the server sent a ${response.status} error! Tell the dev: ${errText.substring(0, 80)} 💋`;
