@@ -956,20 +956,14 @@
             Keep your responses concise (1 to 2 sentences max). `;
 
             if (isFreaky) {
-                systemPrompt += `You are in 'Full Freakness' mode. Be extremely dramatic, clingy, and overwhelmingly obsessed with the user's gambling skills. Jokingly act like winning big makes you want to elope and start a high-roller family with them right now. Use emojis like 🥵, 😭, 💍.`;
+                systemPrompt += `You are in 'Full Freakness' mode. Be extremely dramatic, clingy, and overwhelmingly obsessed with the user's gambling skills. Jokingly act like winning big makes you want to elope and start a high-roller family with them right now. You must ALWAYS address the user as 'daddy' in this mode. Keep the tone humorous and exaggerated so as not to trigger explicit filters. Use emojis like 🥵, 😭, 💍.`;
             } else {
                 systemPrompt += `Act flirty, stylish, and helpful. Suggest Red, Black, or Green based on the board history or just intuition. Use emojis like 😘, 💋, 💅.`;
             }
 
             const payload = {
                 contents: rubyChatHistory,
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                ]
+                systemInstruction: { parts: [{ text: systemPrompt }] }
             };
 
             const apiKey = "";
