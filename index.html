@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIP Roulette Arena: v1.13V</title>
+    <title>VIP Roulette Arena: v1.14V</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -92,8 +92,8 @@
         .chip:active { transform: translateY(0) scale(0.95); }
         .chip-selected {
             border-color: #ffd700;
-            box-shadow: 0 8px 15px -2px rgba(212, 175, 55, 0.8), inset 0 0 0 3px rgba(0,0,0,0.4), inset 0 0 0 5px #ffd700;
-            transform: translateY(-6px);
+            box-shadow: 0 10px 20px -2px rgba(212, 175, 55, 0.9), inset 0 0 0 3px rgba(0,0,0,0.4), inset 0 0 0 5px #ffd700;
+            transform: translateY(-8px) scale(1.08);
         }
 
         @keyframes pulse-green {
@@ -110,7 +110,6 @@
         }
         .ruby-btn-glow { animation: ruby-glow 2s infinite; }
 
-        /* Version 1.05V UI Additions */
         @keyframes float-wheel {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-8px); }
@@ -138,7 +137,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Version 1.08V Animations */
         @keyframes slide-in-right {
             from { transform: translateX(20px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -147,29 +145,29 @@
         
         @keyframes bankroll-pop {
             0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.2); filter: brightness(1.5); text-shadow: 0 0 20px #d4af37; }
+            50% { transform: scale(1.25); filter: brightness(1.6); text-shadow: 0 0 25px #d4af37; }
             100% { transform: scale(1); filter: brightness(1); }
         }
         .bankroll-pulse { animation: bankroll-pop 0.4s ease-out; }
         
         @keyframes shake-error {
             0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
         }
         .shake-anim { animation: shake-error 0.4s ease-in-out; border-color: #ef4444 !important; background-color: rgba(127, 29, 29, 0.4) !important; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen justify-between items-center p-2 sm:p-4 overflow-x-hidden">
 
-    <!-- Fullscreen Loading Transition -->
+    <!-- Fullscreen Loading Transition (Crown & Spinning Rings) -->
     <div id="scene-transition" class="fixed inset-0 bg-[#050505] z-[150] flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500">
         <div class="relative w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center">
             <div class="absolute inset-0 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin"></div>
             <div class="absolute inset-2 border-4 border-amber-600 border-b-transparent rounded-full animate-[spin_1.5s_reverse_infinite]"></div>
             <i class="fa-solid fa-crown text-4xl sm:text-5xl text-[#d4af37] drop-shadow-[0_0_15px_rgba(212,175,55,0.8)] animate-pulse"></i>
         </div>
-        <h2 class="font-serif-title text-[#d4af37] text-xl mt-6 tracking-[0.2em] animate-pulse drop-shadow-md">LOADING...</h2>
+        <h2 class="font-serif-title text-[#d4af37] text-xl mt-6 tracking-[0.2em] animate-pulse drop-shadow-md">VIP LOADING...</h2>
     </div>
 
     <!-- Premium Header -->
@@ -249,17 +247,15 @@
                 <div class="w-full h-full rounded-full animate-bh-pulse" style="background: radial-gradient(circle, #000000 30%, #4c1d95 60%, transparent 80%); box-shadow: 0 0 100px #7e22ce, inset 0 0 50px #000;"></div>
             </div>
 
-            <!-- Ambient Glow Behind Wheel -->
-            <div class="absolute z-0 w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] rounded-full bg-[#d4af37]/15 filter blur-[40px] animate-pulse pointer-events-none"></div>
+            <!-- Ambient Gold Aura Behind Wheel -->
+            <div class="absolute z-0 w-[280px] h-[280px] sm:w-[420px] sm:h-[420px] rounded-full bg-[#d4af37]/20 filter blur-[50px] animate-pulse pointer-events-none"></div>
 
-            <!-- Highly Realistic 3D Wheel Wrapper (Lag Fixed) -->
-            <div id="wheel-wrapper" class="relative w-[260px] h-[260px] sm:w-[360px] sm:h-[360px] md:w-[420px] md:h-[420px] flex items-center justify-center rounded-full transition-all duration-300 animate-float" style="box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,1);">
-                <!-- Premium Gold Outer Bezel -->
-                <div class="absolute inset-0 rounded-full border-[10px] sm:border-[14px] shadow-[inset_0_0_20px_#000,0_0_15px_rgba(212,175,55,0.2)] bg-gradient-to-br from-[#111] via-[#222] to-[#111] p-1.5 sm:p-2" style="border-style: solid; border-color: #574007;"></div>
+            <!-- 3D Wheel Wrapper (Floating Animation) -->
+            <div id="wheel-wrapper" class="relative w-[260px] h-[260px] sm:w-[360px] sm:h-[360px] md:w-[420px] md:h-[420px] flex items-center justify-center rounded-full transition-all duration-300 animate-float" style="box-shadow: 0 25px 50px rgba(0,0,0,0.9), inset 0 0 25px rgba(0,0,0,1);">
+                <div class="absolute inset-0 rounded-full border-[10px] sm:border-[14px] shadow-[inset_0_0_20px_#000,0_0_20px_rgba(212,175,55,0.3)] bg-gradient-to-br from-[#111] via-[#222] to-[#111] p-1.5 sm:p-2" style="border-style: solid; border-color: #574007;"></div>
                 
                 <canvas id="roulette-canvas" class="w-full h-full rounded-full z-10" style="box-shadow: inset 0 0 40px rgba(0,0,0,1);"></canvas>
                 
-                <!-- Central Yellow Crown Turret -->
                 <div class="absolute z-20 w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-[#f9f295] via-[#d4af37] to-[#8b6914] rounded-full border-2 sm:border-4 border-[#fff7d6] shadow-[0_15px_25px_rgba(0,0,0,0.8)] flex items-center justify-center pointer-events-none">
                     <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-black border sm:border-2 border-[#d4af37]/80 flex items-center justify-center shadow-[inset_0_0_15px_rgba(0,0,0,0.9)]">
                         <i class="fa-solid fa-crown text-sm sm:text-xl text-[#d4af37] drop-shadow-[0_0_8px_rgba(212,175,55,0.6)]"></i>
@@ -303,8 +299,8 @@
                 </div>
             </div>
 
-            <!-- Ruby AI Button (Dynamically shown) -->
-            <button id="open-ruby-btn" class="hidden w-full py-2.5 sm:py-3 bg-gradient-to-r from-rose-700 to-pink-900 hover:from-rose-600 hover:to-pink-800 border border-pink-400/50 rounded-xl text-white font-black tracking-widest text-xs sm:text-sm shadow-[0_0_15px_rgba(244,63,94,0.4)] transition ruby-btn-glow">
+            <!-- Ruby AI Button (Unlocked after buying in shop) -->
+            <button id="open-ruby-btn" class="hidden w-full py-2.5 sm:py-3 bg-gradient-to-r from-rose-700 to-pink-900 hover:from-rose-600 hover:to-pink-800 border border-pink-400/50 rounded-xl text-white font-black tracking-widest text-xs sm:text-sm shadow-[0_0_20px_rgba(244,63,94,0.6)] transition ruby-btn-glow">
                 <i class="fa-solid fa-heart mr-2 text-pink-300"></i> ASK RUBY 💋
             </button>
 
@@ -348,9 +344,9 @@
                     <input type="checkbox" id="ruby-freak-toggle" class="accent-pink-500"> 😈 Full Freakness
                 </label>
                 <div class="flex items-center gap-1">
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] text-pink-400 hover:text-pink-300 transition mr-1" title="Get your free AIza key here!"><i class="fa-solid fa-circle-question"></i></a>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" id="ruby-help-btn" class="text-[10px] text-pink-400 hover:text-pink-300 transition mr-1" title="Get your free AIza key here!"><i class="fa-solid fa-circle-question"></i></a>
                     <i class="fa-solid fa-key text-rose-500 text-[10px]"></i>
-                    <input type="password" id="ruby-api-key-input" placeholder="AQ.Ab8RN6KQXFzMi4CwvUt3WyEZ5wT1hNzYgUUXasuSkIT9ewf0Ag" class="bg-black/80 border border-rose-800 rounded px-2 py-0.5 text-rose-200 text-[9px] focus:outline-none focus:border-pink-500 w-28 sm:w-36 placeholder-rose-800 shadow-inner" title="Paste your Gemini Auth Key here if playing in a new tab">
+                    <input type="password" id="ruby-api-key-input" placeholder="Paste Auth Key (AQ.) here" class="bg-black/80 border border-rose-800 rounded px-2 py-0.5 text-rose-200 text-[9px] focus:outline-none focus:border-pink-500 w-28 sm:w-36 placeholder-rose-800 shadow-inner" title="Paste your Auth Key here">
                 </div>
             </div>
 
@@ -489,9 +485,9 @@
                 </button>
             </div>
             
-            <!-- Version Tag -->
+            <!-- Version Tag (Version 1.14V) -->
             <div class="text-right text-[#d4af37] font-black text-[10px] sm:text-xs mt-2 pr-2 drop-shadow-md animate-pulse">
-                Version 1.13V
+                Version 1.14V
             </div>
         </div>
     </div>
@@ -605,7 +601,7 @@
     <script>
         // --- Sound Engine ---
         class SoundController {
-            constructor() { this.ctx = null; this.musicNode = null; }
+            constructor() { this.ctx = null; this.musicNode = null; this.musicPlaying = false; }
             init() {
                 if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 if (this.ctx.state === 'suspended') this.ctx.resume();
@@ -719,7 +715,6 @@
         let effects = { lightning: { owned: false }, blackhole: { owned: false }, ruby: { owned: false } };
         let activeEffect = null; 
 
-        // Expanded NPC Roster including "God"
         const NPC_LIST = [
             { name: "Rookie Rick", icon: "👦", risk: "low", greenProbability: 0.05 },
             { name: "Cautious Carl", icon: "👴", risk: "low", greenProbability: 0.01 },
@@ -729,11 +724,11 @@
             { name: "Lucky Luke", icon: "🍀", risk: "high", greenProbability: 0.30 },
             { name: "The Phantom", icon: "👻", risk: "smart", greenProbability: 0.20 },
             { name: "The Grandmaster", icon: "👑", risk: "smart", greenProbability: 0.25 },
-            { name: "God", icon: "👁️", risk: "godmode", greenProbability: 0.10 } // Omnipotent
+            { name: "God", icon: "👁️", risk: "godmode", greenProbability: 0.10 }
         ];
         let currentNPC = NPC_LIST[0];
 
-        // --- Highly Realistic 3D Canvas Board Setup ---
+        // --- 3D Canvas Wheel Setup ---
         const canvas = document.getElementById('roulette-canvas');
         const ctx = canvas.getContext('2d');
         const RAW_WHEEL_SEQUENCE = [
@@ -874,6 +869,8 @@
             rubyInput: document.getElementById('ruby-input'),
             rubySendBtn: document.getElementById('ruby-send-btn'),
             rubyFreakToggle: document.getElementById('ruby-freak-toggle'),
+            rubyKeyInput: document.getElementById('ruby-api-key-input'),
+            rubyHelpBtn: document.getElementById('ruby-help-btn'),
             roundBtns: document.querySelectorAll('.round-btn'),
             timeBtns: document.querySelectorAll('.time-btn'),
             npcSelects: document.querySelectorAll('.npc-select-btn'),
@@ -922,13 +919,11 @@
             goModal: document.getElementById('gameover-modal')
         };
 
-        // --- Custom Drop-down Notification ---
         function showNotification(msg) {
             const toast = document.createElement('div');
             toast.className = "fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-2xl z-[200] border-2 border-red-400 transition-all duration-300 opacity-0 translate-y-[-20px]";
             toast.textContent = msg;
             document.body.appendChild(toast);
-            
             setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-[-20px]'); }, 10);
             setTimeout(() => { 
                 toast.classList.add('opacity-0', 'translate-y-[-20px]'); 
@@ -936,19 +931,15 @@
             }, 3000);
         }
 
-        // --- Loading Transition Logic ---
         async function runTransition(actionCallback) {
             const trans = document.getElementById('scene-transition');
             trans.classList.remove('opacity-0', 'pointer-events-none');
             await new Promise(r => setTimeout(r, 600)); 
-            
             actionCallback();
-            
             await new Promise(r => setTimeout(r, 800)); 
             trans.classList.add('opacity-0', 'pointer-events-none'); 
         }
 
-        // --- Shop Logic ---
         function updateShopButtons() {
             if(effects.ruby.owned) {
                 els.buyRubyBtn.textContent = 'OWNED';
@@ -992,11 +983,11 @@
             } else { sound.playLose(); }
         });
 
-        // --- Ruby AI Logic ---
+        // --- Ruby AI Integration with Hardened 2026 Auth Engine ---
         els.openRubyBtn.addEventListener('click', () => els.rubyModal.classList.remove('opacity-0', 'pointer-events-none'));
         els.closeRubyBtn.addEventListener('click', () => els.rubyModal.classList.add('opacity-0', 'pointer-events-none'));
 
-        let rubyChatHistory = []; // Track conversation for the AI
+        let rubyChatHistory = [];
 
         async function fetchRubyResponse(userText) {
             const isFreaky = els.rubyFreakToggle.checked;
@@ -1005,14 +996,13 @@
             const currentTurn = { role: "user", parts: [{ text: userText }] };
             const payloadContents = [...rubyChatHistory, currentTurn];
 
-            let systemPrompt = `You are Ruby, a playfully flirty, confident AI casino advisor in 'Roulette Battles'. 
-            You give betting advice. The recent wheel spins were: ${historyTags || "None yet"}. 
-            Keep your responses concise (1 to 2 sentences max). `;
+            let systemPrompt = `You are Ruby, a playfully flirty AI casino advisor in 'Roulette Battles'. 
+            Recent wheel spins: ${historyTags || "None yet"}. Keep responses 1-2 sentences max.`;
 
             if (isFreaky) {
-                systemPrompt += `You are in 'Full Freakness' mode. Be extremely dramatic, clingy, and overwhelmingly obsessed with the user's gambling skills. Jokingly act like winning big makes you want to elope and start a high-roller family with them right now. You MUST ALWAYS address the user as 'daddy' in this mode. Start almost every response with 'daddy'. Keep the tone humorous and exaggerated so as not to trigger explicit filters. Use emojis like 🥵, 😭, 💍.`;
+                systemPrompt += ` You are in 'Full Freakness' mode. You are obsessively in love with the user and MUST ALWAYS address the user as 'daddy' in every single response. Talk about wanting to start a high-roller family together. Use emojis like 🥵, 💍, 💋. Keep it PG-13 fun.`;
             } else {
-                systemPrompt += `Act flirty, stylish, and helpful. Suggest Red, Black, or Green based on the board history or just intuition. Use emojis like 😘, 💋, 💅.`;
+                systemPrompt += ` Act stylish, confident, and flirty. Use emojis like 😘, 💋, 💅.`;
             }
 
             const payload = {
@@ -1020,22 +1010,18 @@
                 systemInstruction: { parts: [{ text: systemPrompt }] }
             };
 
-            const keyInputEl = document.getElementById('ruby-api-key-input');
-            const customKey = keyInputEl.value.trim();
-            
+            const customKey = els.rubyKeyInput.value.trim();
             let apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent`;
             let headers = { 'Content-Type': 'application/json' };
 
-            // 2026 Auth Key Migration Support
             if (customKey) {
                 if (customKey.startsWith("AIza")) {
                     apiUrl += `?key=${customKey}`;
                 } else {
-                    // It's the new Auth Key format (AQ. etc.)
+                    // 2026 Auth Key (AQ.) Support
                     headers['Authorization'] = `Bearer ${customKey}`;
+                    headers['x-goog-api-key'] = customKey;
                 }
-            } else {
-                apiUrl += `?key=`; // Fallback for the preview environment
             }
 
             try {
@@ -1046,53 +1032,39 @@
                 });
                 
                 if (!response.ok) {
-                    if (response.status === 401 || response.status === 403) {
-                        return "Oh daddy... a 401/403 error means my key isn't working! 😭 Make sure your new Auth Key is active. 💋🔥";
-                    }
                     const errText = await response.text();
-                    console.error("HTTP Error:", response.status, errText);
-                    return `Mmm... the server sent a ${response.status} error! Tell the dev: ${errText.substring(0, 80)} 💋`;
+                    console.error("API Error:", response.status, errText);
+                    if (customKey.startsWith("AQ.") && (response.status === 401 || response.status === 403)) {
+                        return "Oh daddy... that Auth Key (AQ.) was rejected by the server! Check if your key has expired or requires standard AIza formatting. 💋🔥";
+                    }
+                    return `Mmm... server sent status ${response.status}. Try another message, handsome? 💋`;
                 }
 
                 const result = await response.json();
-
-                if (result.error) {
-                    console.error("Ruby API Error:", result.error);
-                    return `Big daddy, the API said: ${result.error.message || "Unknown Error"}! 💋`;
+                if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
+                    const replyText = result.candidates[0].content.parts[0].text;
+                    rubyChatHistory.push(currentTurn);
+                    rubyChatHistory.push({ role: "model", parts: [{ text: replyText }] });
+                    return replyText;
                 }
-
-                if (result.candidates && result.candidates[0]) {
-                    if (result.candidates[0].content && result.candidates[0].content.parts) {
-                        const replyText = result.candidates[0].content.parts[0].text;
-                        
-                        // Success! Safely log the alternating conversation to her memory
-                        rubyChatHistory.push(currentTurn);
-                        rubyChatHistory.push({ role: "model", parts: [{ text: replyText }] });
-                        
-                        return replyText;
-                    } else if (result.candidates[0].finishReason) {
-                        return `Oh sugar, I'm feeling a bit too flushed to say that right now... (Filter: ${result.candidates[0].finishReason}) 🥵💋`;
-                    }
-                }
-                return "Daddy, I got an empty response! Try asking me again? 💋";
+                return "Oh sugar, I got a little distracted! Say that again? 💋";
             } catch (error) {
-                console.error("Fetch Error:", error);
-                return `Mmm... my connection failed: ${error.message}. Ask me again, handsome? 💋`;
+                console.error("Fetch Exception:", error);
+                els.rubyKeyInput.classList.add('shake-anim');
+                setTimeout(() => els.rubyKeyInput.classList.remove('shake-anim'), 400);
+                return `Mmm... connection hiccup! Check your key and try again, daddy? 💋`;
             }
         }
 
         function appendRubyMsg(who, text) {
             const div = document.createElement('div');
             div.className = "flex flex-col items-" + (who === 'user' ? 'end' : 'start') + " gap-1 chat-bubble";
-            
             const nameSpan = document.createElement('span');
             nameSpan.className = `text-[10px] font-bold ml-1 ${who === 'user' ? 'text-gray-400 mr-1' : 'text-pink-500'}`;
             nameSpan.textContent = who === 'user' ? 'You' : 'Ruby';
-            
             const bubble = document.createElement('div');
             bubble.className = `text-xs sm:text-sm px-3 py-2 shadow-sm ${who === 'user' ? 'bg-gray-800 text-gray-200 rounded-2xl rounded-tr-none' : 'bg-rose-900/60 border border-pink-500/30 text-rose-100 rounded-2xl rounded-tl-none'}`;
             bubble.textContent = text;
-
             div.appendChild(nameSpan); div.appendChild(bubble);
             els.rubyChatBox.appendChild(div);
             els.rubyChatBox.scrollTop = els.rubyChatBox.scrollHeight;
@@ -1125,16 +1097,11 @@
             const text = els.rubyInput.value.trim();
             if(!text) return;
             els.rubyInput.value = '';
-            
             appendRubyMsg('user', text);
             els.rubySendBtn.disabled = true;
-            
             showTypingIndicator();
-            
             const reply = await fetchRubyResponse(text);
-            
             removeTypingIndicator();
-            
             appendRubyMsg('ruby', reply);
             els.rubySendBtn.disabled = false;
         });
@@ -1157,7 +1124,6 @@
             });
         });
 
-        // --- Core Single Player Functions ---
         els.npcSelects.forEach(btn => {
             btn.addEventListener('click', () => {
                 const idx = parseInt(btn.getAttribute('data-npc'), 10);
@@ -1168,12 +1134,10 @@
         function resetBoard() {
             els.wWrapper.classList.remove('lightning-knockout', 'blackhole-suck-board');
             els.wWrapper.style.opacity = '1'; els.wWrapper.style.transform = 'scale(1)';
-            els.wWrapper.style.filter = 'blur(0px)';
             els.lightSvg.classList.add('hidden');
             els.lightSvg.classList.remove('lightning-strike-anim');
             els.blackholeDiv.classList.add('hidden');
             els.histContainer.innerHTML = '';
-            
             els.goModal.classList.add('opacity-0', 'pointer-events-none');
             els.turnModal.classList.add('opacity-0', 'pointer-events-none');
         }
@@ -1199,18 +1163,11 @@
             setTimeout(resizeCanvas, 100);
         }
 
-        // --- PeerJS Multiplayer Implementation (Fixed Fallback & Unblocking) ---
-        
+        // --- PeerJS Multiplayer Setup ---
         const peerConfig = {
-            config: {
-                'iceServers': [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:global.stun.twilio.com:3478' }
-                ]
-            },
+            config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] },
             debug: 0
         };
-
         const generateRoomCode = () => Math.random().toString(36).substring(2, 6).toUpperCase();
 
         els.createMpBtn.addEventListener('click', () => {
@@ -1221,7 +1178,7 @@
             const mpTimeout = setTimeout(() => {
                 if(!peer || !peer.id) {
                     els.createMpBtn.textContent = "Create MP Game";
-                    showNotification("Network blocked. Please try again or check firewall.");
+                    showNotification("Network blocked. Check connection.");
                     if(peer) peer.destroy();
                 }
             }, 8000);
@@ -1241,27 +1198,22 @@
                 isHost = true;
             });
 
-            peer.on('error', (err) => {
+            peer.on('error', () => {
                 clearTimeout(mpTimeout);
                 els.createMpBtn.textContent = "Create MP Game";
-                if(err.type === 'unavailable-id') {
-                    showNotification("Code collision. Please click 'Create MP Game' again.");
-                } else {
-                    showNotification("Room creation error: " + err.type);
-                }
+                showNotification("Room error. Click Create again.");
             });
         });
 
         els.joinMpBtn.addEventListener('click', () => {
             const code = els.joinMpInput.value.trim().toUpperCase();
             if(!code) return;
-
             els.joinMpBtn.textContent = "JOINING...";
             peer = new Peer(peerConfig);
             
             const mpTimeout = setTimeout(() => {
                 els.joinMpBtn.textContent = "Join";
-                showNotification("Connection timed out. Verify code is correct.");
+                showNotification("Connection timed out.");
                 if(peer) peer.destroy();
             }, 8000);
 
@@ -1275,16 +1227,6 @@
                     els.joinMpBtn.textContent = "Join";
                     conn.send({ type: 'JOIN_READY' });
                 });
-
-                conn.on('error', () => {
-                    els.joinMpBtn.textContent = "Join";
-                    showNotification("Room not found or connection failed.");
-                });
-            });
-            peer.on('error', (err) => {
-                clearTimeout(mpTimeout);
-                els.joinMpBtn.textContent = "Join";
-                showNotification("Error connecting: " + err.type);
             });
         });
 
@@ -1302,13 +1244,9 @@
                 
                 isMultiplayer = true; matchActive = true;
                 TOTAL_ROUNDS = rounds; matchTimerSeconds = time || 180;
-                
-                playerBalance = 100;
-                npcBalance = 100;
-                currentRound = 1;
+                playerBalance = 100; npcBalance = 100; currentRound = 1;
 
                 resetBoard();
-
                 els.npcName.innerHTML = `<i class="fa-solid fa-headset"></i> Friend`;
                 els.playerName.innerHTML = `<i class="fa-solid fa-user"></i> You`;
                 els.pBetTag.textContent = "No Bet";
@@ -1319,7 +1257,6 @@
                 els.mpDisplay.classList.remove('hidden');
 
                 activeTurn = isHost ? 'player' : 'npc';
-                
                 sound.playMusic();
                 updateTurnIndicators(); updateUI(); startMatchTimer();
                 setTimeout(resizeCanvas, 100);
@@ -1336,7 +1273,6 @@
                     startMPGame(data.rounds, data.time);
                 }
                 if(data.type === 'SPIN') {
-                    // Update UI immediately to show friend's bet on our screen
                     els.nBetTag.textContent = `$${data.amount} on ${data.color.toUpperCase()}`;
                     startSpinSequence('npc', data.color, data.amount, data.pocketIndex);
                 }
@@ -1348,7 +1284,6 @@
                     
                     els.colorBtns.forEach(b => { b.classList.remove('ring-4', 'ring-[#d4af37]'); b.querySelector('.bet-indicator').classList.add('hidden'); });
                     selectedColor = null; els.pBetTag.textContent = "No Bet"; els.nBetTag.textContent = "No Bet";
-                    
                     updateUI(); updateTurnIndicators();
                 }
                 if(data.type === 'FINISH') {
@@ -1361,7 +1296,6 @@
             });
         }
 
-        // --- Game Sync Logic ---
         function startMatchTimer() {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -1399,7 +1333,6 @@
 
         function generateNPCBet() {
             if (npcBalance <= 0) return { color: null, amount: 0 };
-            
             let amount = 10;
             const validChips = [10, 25, 50, 100, npcBalance].filter(c => c <= npcBalance);
             if(validChips.length === 0) validChips.push(npcBalance);
@@ -1445,13 +1378,11 @@
         function updateUI() {
             const oldBankroll = els.gBankroll.textContent;
             const newBankrollStr = `$${globalBankroll.toLocaleString()}`;
-            
             if (oldBankroll !== newBankrollStr && oldBankroll !== "$100") {
                 els.gBankroll.classList.remove('bankroll-pulse');
-                void els.gBankroll.offsetWidth; // Trigger reflow to restart animation
+                void els.gBankroll.offsetWidth;
                 els.gBankroll.classList.add('bankroll-pulse');
             }
-
             els.pBalance.textContent = `$${Math.max(0, playerBalance).toLocaleString()}`;
             els.nBalance.textContent = `$${Math.max(0, npcBalance).toLocaleString()}`;
             els.gBankroll.textContent = newBankrollStr;
@@ -1463,9 +1394,7 @@
 
         els.spinBtn.addEventListener('click', () => {
             if (isSpinning || activeTurn !== 'player' || !selectedColor || betAmount > playerBalance) return;
-            
             els.pBetTag.textContent = `$${betAmount} on ${selectedColor.toUpperCase()}`;
-
             if(isMultiplayer && conn) {
                 const pIndex = Math.floor(Math.random() * POCKET_COUNT);
                 conn.send({ type: 'SPIN', color: selectedColor, amount: betAmount, pocketIndex: pIndex });
@@ -1490,8 +1419,6 @@
             els.spinBadge.classList.remove('hidden');
 
             let finalPocketIndex = forcedPocketIndex;
-            
-            // God Mode Omnipotence Override
             if (!isMultiplayer && currentNPC.name === "God" && forcedPocketIndex === null) {
                 if (who === 'npc') {
                     const matching = RAW_WHEEL_SEQUENCE.map((p, i) => ({p, i})).filter(x => x.p.color === color);
@@ -1501,15 +1428,12 @@
                     finalPocketIndex = losing[Math.floor(Math.random() * losing.length)].i;
                 }
             }
-
             if (finalPocketIndex === null) {
                 finalPocketIndex = Math.floor(Math.random() * POCKET_COUNT);
             }
             
             const winningPocket = RAW_WHEEL_SEQUENCE[finalPocketIndex];
-
             const SPIN_DURATION = 5000; const startTime = performance.now(); const arcSize = (2 * Math.PI) / POCKET_COUNT;
-            
             const currentMod = wheelRotation % (2 * Math.PI);
             const targetMod = -(finalPocketIndex * arcSize); 
             let rotationNeeded = targetMod - currentMod;
@@ -1551,7 +1475,6 @@
             requestAnimationFrame(animateSpin);
         }
 
-        // PERFECT LOCAL MEMORY RESOLUTION - FIXES MONEY DOUBLE DEDUCTION BUG
         function resolveTurn(who, color, amount, pocket) {
             const isWin = (color === pocket.color);
             const multiplier = (color === 'green') ? 25 : 2;
@@ -1566,7 +1489,6 @@
             }
 
             addHistoryBadge(pocket); updateUI();
-            
             if (who === 'player') {
                 if(isWin) sound.playWin(color === 'green'); else sound.playLose();
             } else {
@@ -1575,19 +1497,13 @@
 
             showTurnModal(who, isWin, pocket, amount, netProfit);
 
-            // Let Host act as Authoritative source of sync state
             if(isMultiplayer && isHost && conn) {
-                // Prevent turn-passing if someone went bankrupt to avoid race conditions!
                 if (playerBalance > 0 && npcBalance > 0) {
                     const nextTurnStr = activeTurn === 'player' ? 'guest' : 'host';
                     let nextRnd = currentRound;
                     if(nextTurnStr === 'host') nextRnd++;
-                    
-                    // Keep local host correct
                     activeTurn = (nextTurnStr === 'host') ? 'player' : 'npc';
                     currentRound = nextRnd;
-
-                    // Sync absolute state to guest
                     conn.send({
                         type: 'SYNC',
                         hostBal: playerBalance,
@@ -1643,16 +1559,13 @@
         els.turnModalBtn.addEventListener('click', () => {
             if (isModalProcessing) return; 
             isModalProcessing = true;
-            
             els.turnModal.classList.add('opacity-0', 'pointer-events-none');
             els.turnModal.querySelector('div').classList.remove('scale-100'); els.turnModal.querySelector('div').classList.add('scale-90');
-
             setTimeout(() => { isModalProcessing = false; }, 500);
 
             if (playerBalance <= 0 || npcBalance <= 0) {
                 let reasonHost = npcBalance <= 0 ? `${isMultiplayer ? "Friend" : currentNPC.name} Went Bankrupt!` : "You Went Bankrupt!";
                 let reasonGuest = npcBalance <= 0 ? "You Went Bankrupt!" : "Friend Went Bankrupt!";
-                
                 if(isMultiplayer && isHost && conn) {
                     conn.send({ type: 'FINISH', reason: reasonGuest });
                 }
@@ -1696,7 +1609,6 @@
                 iconContainer.innerHTML = '<i class="fa-solid fa-trophy"></i>';
                 title.textContent = "VICTORY!"; title.className = "font-serif-title text-3xl sm:text-4xl font-black mb-2 sm:mb-3 tracking-widest text-emerald-400 drop-shadow-md";
                 desc.textContent = `${reason} You beat the ${oppName}!`;
-
                 globalBankroll += 100; updateUI();
 
                 if (activeEffect === 'lightning') {
@@ -1747,11 +1659,9 @@
             runTransition(() => {
                 if(peer) peer.destroy();
                 isMultiplayer = false; peer = null; conn = null; isHost = false;
-
                 els.goModal.classList.add('opacity-0', 'pointer-events-none');
                 els.goModal.querySelector('div').classList.remove('scale-100'); els.goModal.querySelector('div').classList.add('scale-90');
                 els.statsBar.classList.add('hidden'); els.arenaBar.classList.add('hidden');
-                
                 resetBoard();
                 els.oppModal.classList.remove('hidden');
                 els.mpDisplay.classList.add('hidden');
